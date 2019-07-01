@@ -53,8 +53,8 @@ IMAGE_SIZE = 1024
 
 def yolo_cfg_file(batch, subd, class_nbr):
     '''Generate the config file for yolo v3 training
-    We copy an existing file 'darknet/cfg/yolov3.cfg'
-    then we customize it regarding the context and save it under 'yolo-obj.cfg' '''
+    We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
+    regarding the context and save it under 'yolo-obj.cfg' in metadata directory'''
     input_cfg = PROJECT_DIR + "darknet/cfg/yolov3.cfg"
     with open(input_cfg, 'r') as cfg_in:
         metadata_file = cfg_in.read()
@@ -72,6 +72,16 @@ def yolo_cfg_file(batch, subd, class_nbr):
     output_cfg = OUTPUT_METADATA_DIR + "yolo-obj.cfg"
     with open(output_cfg, 'w') as cfg_out:
         cfg_out.write(metadata_file)
+
+
+def yolo_names_file(list_names):
+    '''Generate the file gathering all object class names for yolo v3 training
+    We except a list of string and save it under 'obj.names' in metadata directory'''
+    names_file = OUTPUT_METADATA_DIR + "obj.names"
+    with open(names_file, 'w') as names:
+        for obj_name in list_names:
+            line = "{}\n".format(obj_name)
+            names.write(line)
 
 
 def dcm_to_array(image_path):
@@ -119,11 +129,15 @@ dataset_train = dataset_train.reset_index(drop=True)
 # Choosing the right amount of data in accordance with the computer power used.
 # Save the choice under two files : 'train' and 'test'
 # =============================================================================
-train = dataset_train.iloc[:200, :5]
-val = dataset_train.iloc[200:220, :5]
 
 os.makedirs(OUTPUT_TRAIN_DATA_DIR, exist_ok=True)
 os.makedirs(OUTPUT_METADATA_DIR, exist_ok=True)
+
+yolo_cfg_file(32, 8, 1)
+
+train = dataset_train.iloc[:200, :5]
+val = dataset_train.iloc[200:220, :5]
+
 
 train.to_csv(TRAIN_CSV, index=False)
 val.to_csv(VAL_CSV, index=False)
