@@ -1,3 +1,5 @@
-train_data/*.jpg
-train_data/*.txt
-
+train_data/obj/*.jpg
+train_data/obj/*.txt
+darknet53.conv.74
+backup_log
+test_data
