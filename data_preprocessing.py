@@ -40,6 +40,7 @@ Source: https://github.com/AlexeyAB/darknet
 
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pydicom
@@ -159,14 +160,28 @@ def yolo_pre_trained_weights(link):
     wget.download(url, out=PROJECT_DIR)
 
 
+def visualisation(dataset, index_patient):
+    '''Display pneumonia or not image with or without the box'''
+    if dataset.iloc[index_patient, -1]:
+        patient_box = dataset[dataset.iloc[:, 0] == dataset.iloc[index_patient, 0]]
+        for x, y, w, h in patient_box.iloc[:, 1:5].values:
+            plt.plot([x, x, x+w, x+w, x], [y, y+h, y+h, y, y], label="pneumonia")
+        plt.imshow(cv2.imread(TRAIN_IMAGES_DIR + dataset.iloc[index_patient, 0] + '.jpg'))
+        plt.title("Pneumonia")
+        plt.legend()
+    else:
+        plt.imshow(cv2.imread(TRAIN_IMAGES_DIR + dataset.iloc[index_patient, 0] + '.jpg'))
+        plt.title("No pneumonia")
+
+
 # =============================================================================
 # Loading target data from training directory
 # =============================================================================
-dataset_train = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
+original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
 dataset_test = pd.read_csv(IMAGE_DIR + FILE_TEST)
 
 #Keep only images with pneumonia
-dataset_train = dataset_train.dropna()
+dataset_train = original_dataset.dropna()
 dataset_train = dataset_train.reset_index(drop=True)
 
 
@@ -193,8 +208,8 @@ val = dataset_train.iloc[train_set:, :]
 train.to_csv(TRAIN_CSV, index=False)
 val.to_csv(VAL_CSV, index=False)
 
-yolo_jpg_file(train, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
-yolo_jpg_file(val, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
+yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
+
 yolo_label_generation(train, TRAIN_IMAGES_DIR)
 yolo_label_generation(val, TRAIN_IMAGES_DIR)
 yolo_image_path_file(train, TRAIN_DATA_DIR, "train.txt")
@@ -205,6 +220,5 @@ print('''To lauch the training, please enter the following command in your termi
     ./darknet/darknet detector train train_data/obj.data train_data/yolo-obj.cfg darknet53.conv.74\n
     Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 
-#test = dataset_test.iloc[:20]
 #test.to_csv(PROJECT_DIR + "test/test_ship.csv", index=False)
-#yolo_jpg_file(test, "train_v2/", TEST_DATA_DIR)
+yolo_jpg_file(dataset_test, INPUT_TEST_DATA_DIR, TEST_DATA_DIR)
