@@ -30,6 +30,14 @@ To train yolo_v3 algorithm to detect our custom objects we need to follow this s
     Download a pre-trained weights file
 Source: https://github.com/AlexeyAB/darknet
 
+To save model files more regularly during the training, we need to modify the code of this following
+file "darknet/examples/detector.c" (around the line 138) :
+    if(i%10000==0 || (i < 1000 && i%100 == 0)){ #old
+    to:
+    if(i%1000==0 || (i < 2000 && i%50 == 0)){ #new
+    we now save in the backup folder every 50 iterations a '.weights' file till we reach 2000 and
+    then we save after every 1000 iterations
+
 @article{yolov3,
   title={YOLOv3: An Incremental Improvement},
   author={Redmon, Joseph and Farhadi, Ali},
@@ -174,6 +182,23 @@ def visualisation(dataset, index_patient):
         plt.title("No pneumonia")
 
 
+def loss_function(file_path):
+    '''Represent the loss trend line over the learning process
+    The 'train_log.txt' file is required to go through this analysis'''
+    with open(file_path, "r") as log:
+        iter_nbr = list()
+        loss_value = list()
+        for line in log:
+            if "rate" in line:
+                iter_nbr.append(int(line.split()[0].split(":")[0]))
+                loss_value.append(float(line.split()[2]))
+        plt.plot(iter_nbr, loss_value, label="loss function")
+        plt.title("Evolution of the loss function during the training")
+        plt.legend()
+        plt.xlabel("Number of iterations")
+        plt.ylabel("Loss value")
+
+
 # =============================================================================
 # Loading target data from training directory
 # =============================================================================
@@ -217,8 +242,9 @@ yolo_image_path_file(val, TRAIN_DATA_DIR, "val.txt")
 #yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
 
 print('''To lauch the training, please enter the following command in your terminal :\n
-    ./darknet/darknet detector train train_data/obj.data train_data/yolo-obj.cfg darknet53.conv.74\n
-    Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
+./darknet/darknet detector train train_data/obj.data train_data/yolo-obj.cfg darknet53.conv.74\
+-i 0 | tee train_log.txt\n
+Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 
 #test.to_csv(PROJECT_DIR + "test/test_ship.csv", index=False)
 yolo_jpg_file(dataset_test, INPUT_TEST_DATA_DIR, TEST_DATA_DIR)
