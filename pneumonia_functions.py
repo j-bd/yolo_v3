@@ -74,44 +74,6 @@ OBJ_NBR = 1
 YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
 
 
-
-def structure():
-    '''Create the structure for the project and downoald necessary file'''
-    os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
-    os.makedirs(TEST_DATA_DIR, exist_ok=True)
-    os.makedirs(BACKUP, exist_ok=True)
-
-    copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
-
-    print("Initial weight downloading is ongoing")
-    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
-
-
-def data_preprocessing(dataset, split_rate):
-    '''Produce different datasets'''
-    #Dataframe with only images of pneumonia
-    positive = dataset[dataset.iloc[:, -1] == 1]
-    positive = positive.reset_index(drop=True)
-    pos_size = len(positive)
-
-    #Dataframe with only images of non pneumonia. As required by the authors of Yolov3 we need to
-    #have DataFrames of same size
-    negative = dataset[dataset.iloc[:, -1] == 0]
-    neg_size = min(len(positive.iloc[:, 0].unique()), len(negative))
-    negative = negative.iloc[: neg_size, :]
-    negative = negative.reset_index(drop=True)
-
-    #Train and validation dataframe
-    pos_split = int(pos_size * split_rate)
-    neg_split = int(neg_size * split_rate)
-    train = pd.concat([positive.iloc[: pos_split, :], negative.iloc[: neg_split, :]], axis=0)
-    train = train.reset_index(drop=True)
-    val = pd.concat([positive.iloc[pos_split:, :], negative.iloc[neg_split:, :]], axis=0)
-    val = val.reset_index(drop=True)
-
-    return train, val, positive, negative
-
-
 def yolo_cfg_file(batch, subd, class_nbr):
     '''Generate the config file for yolo v3 training
     We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
@@ -208,6 +170,51 @@ def yolo_pre_trained_weights(link):
     wget.download(url, out=PROJECT_DIR)
 
 
+def structure():
+    '''Create the structure for the project and downoald necessary file'''
+    os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
+    os.makedirs(TEST_DATA_DIR, exist_ok=True)
+    os.makedirs(BACKUP, exist_ok=True)
+
+    copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
+
+    print(f"Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
+
+
+def data_preprocessing(dataset, split_rate):
+    '''Produce different datasets'''
+    #Dataframe with only images of pneumonia
+    positive = dataset[dataset.iloc[:, -1] == 1]
+    positive = positive.reset_index(drop=True)
+    pos_size = len(positive)
+
+    #Dataframe with only images of non pneumonia. As required by the authors of Yolov3 we need to
+    #have DataFrames of same size
+    negative = dataset[dataset.iloc[:, -1] == 0]
+    neg_size = min(len(positive.iloc[:, 0].unique()), len(negative))
+    negative = negative.iloc[: neg_size, :]
+    negative = negative.reset_index(drop=True)
+
+    #Train and validation dataframe
+    pos_split = int(pos_size * split_rate)
+    neg_split = int(neg_size * split_rate)
+    train = pd.concat([positive.iloc[: pos_split, :], negative.iloc[: neg_split, :]], axis=0)
+    train = train.reset_index(drop=True)
+    val = pd.concat([positive.iloc[pos_split:, :], negative.iloc[neg_split:, :]], axis=0)
+    val = val.reset_index(drop=True)
+
+    return train, val, positive, negative
+
+
+def yolo_parameters(batch, subdivisions, obj):
+    '''Create all files wich will be used by Yolo v3 algorithm during the learning process'''
+    yolo_cfg_file(batch, subdivisions, obj)
+    yolo_names_file(["pneumonia"])
+    yolo_data_file(obj)
+
+    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
+
+
 def visualisation(dataset, index_patient):
     '''Display pneumonia or not image with or without the box'''
     if dataset.iloc[index_patient, -1]:
@@ -240,21 +247,15 @@ def loss_function(file_path):
 
 
 # =============================================================================
-# Loading data from training directory
+# Yolo v3 files and parameters preparation
 # =============================================================================
 structure()
+
+yolo_parameters(64, 16, OBJ_NBR)
 
 original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
 test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
 train_df, val_df, pneumonia_df, non_pneumonia_df = data_preprocessing(original_dataset, 0.8)
-
-
-# =============================================================================
-# Yolo v3 files and parameters preparation
-# =============================================================================
-yolo_cfg_file(64, 16, OBJ_NBR)
-yolo_names_file(["pneumonia"])
-yolo_data_file(OBJ_NBR)
 
 yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
 
