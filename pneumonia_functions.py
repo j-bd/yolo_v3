@@ -47,6 +47,7 @@ file "darknet/examples/detector.c" (around the line 138) :
 """
 
 import os
+from distutils.dir_util import copy_tree
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -60,7 +61,7 @@ IMAGE_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/data/"
 INPUT_TRAIN_DATA_DIR = IMAGE_DIR + "stage_2_train_images/"
 INPUT_TEST_DATA_DIR = IMAGE_DIR + "stage_2_test_images/"
 PROJECT_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
-TRAIN_DATA_DIR = PROJECT_DIR + "train_data/"
+TRAIN_DATA_DIR = PROJECT_DIR + "data/"
 TRAIN_IMAGES_DIR = TRAIN_DATA_DIR + "obj/"
 TEST_DATA_DIR = PROJECT_DIR + "test_data/"
 BACKUP = PROJECT_DIR + "backup_log/"
@@ -69,7 +70,46 @@ FILE_TEST = "stage_2_sample_submission.csv"
 TRAIN_CSV = TRAIN_IMAGES_DIR + "train_pneumonia.csv"
 VAL_CSV = TRAIN_IMAGES_DIR + "val_pneumonia.csv"
 IMAGE_SIZE = 1024
+OBJ_NBR = 1
+YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
 
+
+
+def structure():
+    '''Create the structure for the project and downoald necessary file'''
+    os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
+    os.makedirs(TEST_DATA_DIR, exist_ok=True)
+    os.makedirs(BACKUP, exist_ok=True)
+
+    copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
+
+    print("Initial weight downloading is ongoing")
+    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
+
+
+def data_preprocessing(dataset, split_rate):
+    '''Produce different datasets'''
+    #Dataframe with only images of pneumonia
+    positive = dataset[dataset.iloc[:, -1] == 1]
+    positive = positive.reset_index(drop=True)
+    pos_size = len(positive)
+
+    #Dataframe with only images of non pneumonia. As required by the authors of Yolov3 we need to
+    #have DataFrames of same size
+    negative = dataset[dataset.iloc[:, -1] == 0]
+    neg_size = min(len(positive.iloc[:, 0].unique()), len(negative))
+    negative = negative.iloc[: neg_size, :]
+    negative = negative.reset_index(drop=True)
+
+    #Train and validation dataframe
+    pos_split = int(pos_size * split_rate)
+    neg_split = int(neg_size * split_rate)
+    train = pd.concat([positive.iloc[: pos_split, :], negative.iloc[: neg_split, :]], axis=0)
+    train = train.reset_index(drop=True)
+    val = pd.concat([positive.iloc[pos_split:, :], negative.iloc[neg_split:, :]], axis=0)
+    val = val.reset_index(drop=True)
+
+    return train, val, positive, negative
 
 
 def yolo_cfg_file(batch, subd, class_nbr):
@@ -200,51 +240,41 @@ def loss_function(file_path):
 
 
 # =============================================================================
-# Loading target data from training directory
+# Loading data from training directory
 # =============================================================================
+structure()
+
 original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
-dataset_test = pd.read_csv(IMAGE_DIR + FILE_TEST)
-
-#Keep only images with pneumonia
-dataset_train = original_dataset.dropna()
-dataset_train = dataset_train.reset_index(drop=True)
+test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
+train_df, val_df, pneumonia_df, non_pneumonia_df = data_preprocessing(original_dataset, 0.8)
 
 
 # =============================================================================
-# Choosing the right amount of data in accordance with the computer power used.
-# Save the choice under two files : 'train' and 'test'
+# Yolo v3 files and parameters preparation
 # =============================================================================
-
-os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
-os.makedirs(TEST_DATA_DIR, exist_ok=True)
-os.makedirs(BACKUP, exist_ok=True)
-obj_nbr = int(dataset_train.iloc[:, -1].unique())#class column with value starting to 0
-
-yolo_cfg_file(64, 16, obj_nbr)
+yolo_cfg_file(64, 16, OBJ_NBR)
 yolo_names_file(["pneumonia"])
-yolo_data_file(obj_nbr)
-
-
-train_set = int(len(dataset_train) * 0.8)
-train = dataset_train.iloc[:train_set, :]
-val = dataset_train.iloc[train_set:, :]
-
-
-train.to_csv(TRAIN_CSV, index=False)
-val.to_csv(VAL_CSV, index=False)
+yolo_data_file(OBJ_NBR)
 
 yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
 
-yolo_label_generation(train, TRAIN_IMAGES_DIR)
-yolo_label_generation(val, TRAIN_IMAGES_DIR)
-yolo_image_path_file(train, TRAIN_DATA_DIR, "train.txt")
-yolo_image_path_file(val, TRAIN_DATA_DIR, "val.txt")
-#yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
+yolo_label_generation(pneumonia_df, TRAIN_IMAGES_DIR)
+
+yolo_image_path_file(train_df, TRAIN_DATA_DIR, "train.txt")
+yolo_image_path_file(val_df, TRAIN_DATA_DIR, "val.txt")
 
 print('''To lauch the training, please enter the following command in your terminal :\n
 ./darknet/darknet detector train train_data/obj.data train_data/yolo-obj.cfg darknet53.conv.74\
 -i 0 | tee train_log.txt\n
 Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 
-#test.to_csv(PROJECT_DIR + "test/test_ship.csv", index=False)
-yolo_jpg_file(dataset_test, INPUT_TEST_DATA_DIR, TEST_DATA_DIR)
+
+# =============================================================================
+# Launching test
+# =============================================================================
+yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_DATA_DIR)
+#./darknet/darknet detector test train_data/obj.data train_data/yolo-obj.cfg yolo-obj_350.weights
+LAST_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/last/"
+df_last = test_dataset.iloc[:30, :]
+yolo_jpg_file(df_last, INPUT_TEST_DATA_DIR, LAST_DIR)
+yolo_image_path_file(df_last, TRAIN_DATA_DIR, "test.txt")

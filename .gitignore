@@ -3,3 +3,5 @@ train_data/obj/*.txt
 darknet53.conv.74
 backup_log
 test_data
+last
+data
