@@ -1,7 +1,6 @@
-train_data/obj/*.jpg
-train_data/obj/*.txt
+data/obj/
+data/labels/
 darknet53.conv.74
 backup_log
 test_data
-last
-data
+

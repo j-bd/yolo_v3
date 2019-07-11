@@ -204,8 +204,6 @@ def yolo_parameters(batch, subdivisions, obj, list_obj):
     yolo_names_file(list_obj)
     yolo_data_file(obj)
 
-    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
-
 
 def structure():
     '''Create the structure for the project and downoald necessary file'''
@@ -216,6 +214,8 @@ def structure():
     copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
 
     print(f"Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
+
+    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
 
 
 def visualisation(dataset, index_patient):
