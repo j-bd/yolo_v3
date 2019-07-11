@@ -67,8 +67,8 @@ TEST_DATA_DIR = PROJECT_DIR + "test_data/"
 BACKUP = PROJECT_DIR + "backup_log/"
 FILE_TRAIN = "stage_2_train_labels.csv"
 FILE_TEST = "stage_2_sample_submission.csv"
-TRAIN_CSV = TRAIN_IMAGES_DIR + "train_pneumonia.csv"
-VAL_CSV = TRAIN_IMAGES_DIR + "val_pneumonia.csv"
+#TRAIN_CSV = TRAIN_IMAGES_DIR + "train_pneumonia.csv"
+#VAL_CSV = TRAIN_IMAGES_DIR + "val_pneumonia.csv"
 IMAGE_SIZE = 1024
 OBJ_NBR = 1
 YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
@@ -77,7 +77,7 @@ YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
 def yolo_cfg_file(batch, subd, class_nbr):
     '''Generate the config file for yolo v3 training
     We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
-    regarding the context and save it under 'yolo-obj.cfg' in metadata directory'''
+    regarding the context and save it under 'yolo-obj.cfg' in data directory'''
     input_cfg = PROJECT_DIR + "darknet/cfg/yolov3.cfg"
     with open(input_cfg, 'r') as cfg_in:
         new_cfg = cfg_in.read()
@@ -99,7 +99,7 @@ def yolo_cfg_file(batch, subd, class_nbr):
 
 def yolo_names_file(list_names):
     '''Generate the file gathering all object class names for yolo v3 training
-    We except a list of string and save it under 'obj.names' in metadata directory'''
+    We except a list of string and save it under 'obj.names' in data directory'''
     names_file = TRAIN_DATA_DIR + "obj.names"
     with open(names_file, 'w') as names:
         for obj_name in list_names:
@@ -109,7 +109,7 @@ def yolo_names_file(list_names):
 
 def yolo_data_file(class_nbr):
     '''Generate the file with paths for yolo v3 training
-    The file will be save under 'obj.data' in metadata directory'''
+    The file will be save under 'obj.data' in data directory'''
     data_file = TRAIN_DATA_DIR + "obj.data"
     with open(data_file, 'w') as data:
         line = f"classes = {class_nbr}\n"\
@@ -136,22 +136,25 @@ def yolo_jpg_file(dataset, origin_folder, target_folder):
 def yolo_label_generation(dataset, target_folder):
     '''Generate label in the shape of yolo_v3 learning CNN:
     <object-class> <x_center> <y_center> <width> <height>
-    relative value is required by yolo_v3 algorithm
-    one txt file per image is required by yolo_v3 algorithm'''
+    relative value is required by yolo_v3 algorithm.
+    one txt file per image is also required by yolo_v3 algorithm
+    As mentionned in darknet repo, to improve results we need to add images without objects
+    All created files will be saved in the same directory which contains jpg files'''
     for name, groupe in dataset.groupby("patientId"):
         label_file = target_folder + "/" + name + ".txt"
         with open(label_file, "w+") as file:
             for x, y, w, h, cl in groupe.iloc[:, 1:].values:
-                rel_w = w / IMAGE_SIZE
-                rel_h = h / IMAGE_SIZE
-                rel_x_center = x / IMAGE_SIZE + rel_w / 2
-                rel_y_center = y / IMAGE_SIZE + rel_h / 2
-                line = f"{int(cl - 1)} "\
-                f"{rel_x_center} "\
-                f"{rel_y_center} "\
-                f"{rel_w} "\
-                f"{rel_h}\n"
-                file.write(line)
+                if cl:
+                    rel_w = w / IMAGE_SIZE
+                    rel_h = h / IMAGE_SIZE
+                    rel_x_center = x / IMAGE_SIZE + rel_w / 2
+                    rel_y_center = y / IMAGE_SIZE + rel_h / 2
+                    line = f"{int(cl - 1)} "\
+                    f"{rel_x_center} "\
+                    f"{rel_y_center} "\
+                    f"{rel_w} "\
+                    f"{rel_h}\n"
+                    file.write(line)
 
 
 def yolo_image_path_file(dataset, target_folder, file_name):
@@ -168,17 +171,6 @@ def yolo_pre_trained_weights(link):
     url = link
     print("Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB). Please wait")
     wget.download(url, out=PROJECT_DIR)
-
-
-def structure():
-    '''Create the structure for the project and downoald necessary file'''
-    os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
-    os.makedirs(TEST_DATA_DIR, exist_ok=True)
-    os.makedirs(BACKUP, exist_ok=True)
-
-    copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
-
-    print(f"Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
 
 
 def data_preprocessing(dataset, split_rate):
@@ -206,13 +198,24 @@ def data_preprocessing(dataset, split_rate):
     return train, val, positive, negative
 
 
-def yolo_parameters(batch, subdivisions, obj):
+def yolo_parameters(batch, subdivisions, obj, list_obj):
     '''Create all files wich will be used by Yolo v3 algorithm during the learning process'''
     yolo_cfg_file(batch, subdivisions, obj)
-    yolo_names_file(["pneumonia"])
+    yolo_names_file(list_obj)
     yolo_data_file(obj)
 
     yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
+
+
+def structure():
+    '''Create the structure for the project and downoald necessary file'''
+    os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
+    os.makedirs(TEST_DATA_DIR, exist_ok=True)
+    os.makedirs(BACKUP, exist_ok=True)
+
+    copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
+
+    print(f"Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
 
 
 def visualisation(dataset, index_patient):
@@ -251,7 +254,7 @@ def loss_function(file_path):
 # =============================================================================
 structure()
 
-yolo_parameters(64, 16, OBJ_NBR)
+yolo_parameters(64, 16, OBJ_NBR, ["pneumonia"])
 
 original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
 test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
@@ -259,13 +262,13 @@ train_df, val_df, pneumonia_df, non_pneumonia_df = data_preprocessing(original_d
 
 yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
 
-yolo_label_generation(pneumonia_df, TRAIN_IMAGES_DIR)
+yolo_label_generation(original_dataset, TRAIN_IMAGES_DIR)
 
 yolo_image_path_file(train_df, TRAIN_DATA_DIR, "train.txt")
 yolo_image_path_file(val_df, TRAIN_DATA_DIR, "val.txt")
 
 print('''To lauch the training, please enter the following command in your terminal :\n
-./darknet/darknet detector train train_data/obj.data train_data/yolo-obj.cfg darknet53.conv.74\
+./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74\
 -i 0 | tee train_log.txt\n
 Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 
