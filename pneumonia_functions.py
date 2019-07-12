@@ -18,6 +18,7 @@ Source: https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data
 Before launching this algorithm, you need to clone darknet (yolov3 package) in your project
 directory (variable: PROJECT_DIR). To do it, please follow the instructions on this website:
 https://pjreddie.com/darknet/install/
+Check options available before enter 'make' command as GPU and so on.
 
 To train yolo_v3 algorithm to detect our custom objects we need to follow this steps:
     Create a file named 'yolo-obj.cfg' as a configuration of the CNN (a custom copy of yolov3.cfg)
@@ -67,8 +68,6 @@ TEST_DATA_DIR = PROJECT_DIR + "test_data/"
 BACKUP = PROJECT_DIR + "backup_log/"
 FILE_TRAIN = "stage_2_train_labels.csv"
 FILE_TEST = "stage_2_sample_submission.csv"
-#TRAIN_CSV = TRAIN_IMAGES_DIR + "train_pneumonia.csv"
-#VAL_CSV = TRAIN_IMAGES_DIR + "val_pneumonia.csv"
 IMAGE_SIZE = 1024
 OBJ_NBR = 1
 YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
@@ -93,6 +92,22 @@ def yolo_cfg_file(batch, subd, class_nbr):
     new_cfg = new_cfg.replace('filters=255', 'filters=' + filter_yolo)
 
     output_cfg = TRAIN_DATA_DIR + "yolo-obj.cfg"
+    with open(output_cfg, 'w') as cfg_out:
+        cfg_out.write(new_cfg)
+
+
+def test_cfg_file(size):
+    '''Create a new '.cfg' file for yolo v3 detection as recommand by authors. We increase the
+    network-resolution by changing the size of 'height' and 'width'. Note that we need to keep a
+    value multiple of 32'''
+    input_cfg = PROJECT_DIR + "darknet/cfg/yolov3.cfg"
+    with open(input_cfg, 'r') as cfg_in:
+        new_cfg = cfg_in.read()
+
+    new_cfg = new_cfg.replace('width=608', 'width=' + str(size))
+    new_cfg = new_cfg.replace('height=608', 'height=' + str(size))
+
+    output_cfg = TRAIN_DATA_DIR + "yolo-obj_test.cfg"
     with open(output_cfg, 'w') as cfg_out:
         cfg_out.write(new_cfg)
 
@@ -277,7 +292,12 @@ Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 # Launching test
 # =============================================================================
 yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_DATA_DIR)
-#./darknet/darknet detector test train_data/obj.data train_data/yolo-obj.cfg yolo-obj_350.weights
+
+test_cfg_file(832)
+
+
+
+#./darknet/darknet detector test data/obj.data data/yolo-obj_test.cfg yolo-obj_350.weights
 LAST_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/last/"
 df_last = test_dataset.iloc[:30, :]
 yolo_jpg_file(df_last, INPUT_TEST_DATA_DIR, LAST_DIR)

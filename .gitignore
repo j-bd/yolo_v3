@@ -3,4 +3,4 @@ data/labels/
 darknet53.conv.74
 backup_log
 test_data
-
+train_log.txt
