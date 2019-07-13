@@ -64,7 +64,8 @@ INPUT_TEST_DATA_DIR = IMAGE_DIR + "stage_2_test_images/"
 PROJECT_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
 TRAIN_DATA_DIR = PROJECT_DIR + "data/"
 TRAIN_IMAGES_DIR = TRAIN_DATA_DIR + "obj/"
-TEST_DATA_DIR = PROJECT_DIR + "test_data/"
+TEST_DATA_DIR = PROJECT_DIR + "detect_results/"
+TEST_IMAGES_DIR = TEST_DATA_DIR + "obj/"
 BACKUP = PROJECT_DIR + "backup_log/"
 FILE_TRAIN = "stage_2_train_labels.csv"
 FILE_TEST = "stage_2_sample_submission.csv"
@@ -107,7 +108,7 @@ def test_cfg_file(size):
     new_cfg = new_cfg.replace('width=608', 'width=' + str(size))
     new_cfg = new_cfg.replace('height=608', 'height=' + str(size))
 
-    output_cfg = TRAIN_DATA_DIR + "yolo-obj_test.cfg"
+    output_cfg = TEST_DATA_DIR + "yolo-obj_test.cfg"
     with open(output_cfg, 'w') as cfg_out:
         cfg_out.write(new_cfg)
 
@@ -223,7 +224,7 @@ def yolo_parameters(batch, subdivisions, obj, list_obj):
 def structure():
     '''Create the structure for the project and downoald necessary file'''
     os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
-    os.makedirs(TEST_DATA_DIR, exist_ok=True)
+    os.makedirs(TEST_IMAGES_DIR, exist_ok=True)
     os.makedirs(BACKUP, exist_ok=True)
 
     copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
@@ -291,7 +292,7 @@ Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 # =============================================================================
 # Launching test
 # =============================================================================
-yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_DATA_DIR)
+yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
 
 test_cfg_file(832)
 
