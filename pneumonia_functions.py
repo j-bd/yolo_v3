@@ -185,7 +185,8 @@ def yolo_image_path_file(dataset, target_folder, file_name):
 def yolo_pre_trained_weights(link):
     '''Download the pre-trained weights darknet53.conv.74 (162.5MB)'''
     url = link
-    print("Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB). Please wait")
+    print("[INFO] Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB)."\
+          "Please wait")
     wget.download(url, out=PROJECT_DIR)
 
 
@@ -229,7 +230,7 @@ def structure():
 
     copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
 
-    print(f"Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
+    print(f"[INFO] Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
 
     yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
 
@@ -283,7 +284,7 @@ yolo_label_generation(original_dataset, TRAIN_IMAGES_DIR)
 yolo_image_path_file(train_df, TRAIN_DATA_DIR, "train.txt")
 yolo_image_path_file(val_df, TRAIN_DATA_DIR, "val.txt")
 
-print('''To lauch the training, please enter the following command in your terminal :\n
+print('''[INFO] To lauch the training, please enter the following command in your terminal :\n
 ./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74\
 -i 0 | tee train_log.txt\n
 Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
@@ -298,7 +299,7 @@ test_cfg_file(832)
 
 
 
-#./darknet/darknet detector test data/obj.data data/yolo-obj_test.cfg yolo-obj_350.weights
+#./darknet/darknet detector test data/obj.data test_data/yolo-obj_test.cfg test_data/p_1400.weights
 LAST_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/last/"
 df_last = test_dataset.iloc[:30, :]
 yolo_jpg_file(df_last, INPUT_TEST_DATA_DIR, LAST_DIR)
