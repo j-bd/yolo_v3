@@ -3,7 +3,7 @@
 """
 Created on Fri Jul 12 11:51:18 2019
 
-@author: latitude
+@author: j-bd
 """
 import time
 
