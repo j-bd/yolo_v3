@@ -56,7 +56,18 @@ import pneumonia_detection
 
 def main():
     "Allow the selection between algorithm training or image detection"
-    argp = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--image", required=False,
+                    help="path to input image")
+    parser.add_argument("-if", "--image_folder", required=False,
+                    help="path to input image")
+    parser.add_argument("-y", "--yolo", required=True,
+                    help="base path to YOLO directory")
+    parser.add_argument("-c", "--confidence", type=float, default=0.5,
+                    help="minimum probability to filter weak detections")
+    parser.add_argument("-t", "--threshold", type=float, default=0.3,
+                    help="threshold when applying non-maxima suppression")
+    args = vars(parser.parse_args())
 
 
 

@@ -233,7 +233,7 @@ structure()
 yolo_parameters(64, 16, OBJ_NBR, ["pneumonia"])
 
 original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
-test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
+
 train_df, val_df, pneumonia_df, non_pneumonia_df = data_preprocessing(original_dataset, 0.8)
 
 yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
@@ -252,10 +252,10 @@ Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 # =============================================================================
 # Launching test
 # =============================================================================
+test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
 yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
 
 test_cfg_file(832)
-
 
 
 #./darknet/darknet detector test data/obj.data test_data/yolo-obj_test.cfg test_data/p_1400.weights
