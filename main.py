@@ -47,28 +47,162 @@ file "darknet/examples/detector.c" (around the line 138) :
 }
 """
 
-
 import argparse
+
+import pandas as pd
 
 import pneumonia_functions
 import pneumonia_detection
 
 
-def main():
-    "Allow the selection between algorithm training or image detection"
+def create_parser():
+    '''Get the informations from the operator'''
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--image", required=False,
-                    help="path to input image")
-    parser.add_argument("-if", "--image_folder", required=False,
-                    help="path to input image")
-    parser.add_argument("-y", "--yolo", required=True,
-                    help="base path to YOLO directory")
+    parser.add_argument("-p", "--preprocessing",
+                        help="command to prepare data in order to lauch yolo training")
+    parser.add_argument("-of", "--origin_folder", required=True,
+                        help="path to the Kaggle folder containing all data")
+    parser.add_argument("-pf", "--project_folder", required=True,
+                        help="path to your project folder")
+    parser.add_argument("-b", "--batch", type=int, default=64,
+                        help="batch number for yolo config file used during yolo training")
+    parser.add_argument("-s", "--subdivisions", type=int, default=16,
+                        help="subdivisions number for yolo config file used during yolo training")
+    parser.add_argument("-sr", "--split_rate", type=float, default=0.8,
+                        help="split rate between train and validation dataset during yolo training")
+    parser.add_argument("-d", "--detection",
+                        help="command to detect pneumonia object on image")
+    parser.add_argument("-i", "--image",
+                        help="path to input image for detection")
+    parser.add_argument("-if", "--image_folder",
+                        help="path to input images folder for detection")
+    parser.add_argument("-w", "--weights_path",
+                        help="Path to the weights file used by Yolo algorith to detect object")
+    parser.add_argument("-cfg", "--config_path",
+                        help="Path to the config file used by Yolo algorith to detect object")
     parser.add_argument("-c", "--confidence", type=float, default=0.5,
-                    help="minimum probability to filter weak detections")
+                        help="minimum probability to filter weak detections")
     parser.add_argument("-t", "--threshold", type=float, default=0.3,
-                    help="threshold when applying non-maxima suppression")
-    args = vars(parser.parse_args())
+                        help="threshold when applying non-maxima suppression")
+    parser.add_argument("-dis", "--detect_im_size", type=int, default=832,
+                        help="resize input image to improve the detection"\
+                        "(must be a multiple of 32)")
+    args = parser.parse_args()
+    return args
 
+
+def check_inputs(args):
+    '''Check if inputs are right'''
+    if args.preprocessing and args.detection is not None:
+        raise ValueError("Choose between preprocessing and detection but not both")
+    if args.preprocessing:
+        if args.origin_folder is None:
+            raise ValueError("Missing path to the origin folder (Kaggle data)")
+        if args.project_folder is None:
+            raise ValueError("Missing path to the your project folder")
+        if not 0.7 <= args.split_rate <= 0.95:
+            raise ValueError(f"Split rate must be between 0,7 and 0.95,"\
+                             "currently {args.split_rate}")
+    if args.detection:
+        if args.image and args.image_folder is None:
+            raise ValueError("Path to image or images folder is missing")
+        if args.image and args.image_folder is not None:
+            raise ValueError("Choose between an image or images directory but not both")
+        if args.weights_path is None:
+            raise ValueError("Missing path to Yolo weights file used for detection")
+        if args.weights_path is None:
+            raise ValueError("Missing path to Yolo config file used for detection")
+        if not args.detect_im_size % 32 == 0:
+            raise ValueError("Detection image size must be a multiple of 32")
+
+
+def pre_trainning(args):
+    '''Lauch all necessary steps to set up Yolo v3 algorithm before for objects trainning'''
+    IMAGE_DIR = args.origin_folder
+    INPUT_TRAIN_DATA_DIR = IMAGE_DIR + "stage_2_train_images/"
+    PROJECT_DIR = args.project_folder
+    TRAIN_DATA_DIR = PROJECT_DIR + "data/"
+    TRAIN_IMAGES_DIR = PROJECT_DIR + "data/obj/"
+    BACKUP = PROJECT_DIR + "backup_log/"
+    FILE_TRAIN = "stage_2_train_labels.csv"
+    IMAGE_SIZE = 1024
+    OBJ_NBR = 1
+    YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
+    TEST_IMAGES_DIR = PROJECT_DIR + "detect_results/obj/"
+
+    pneumonia_functions.structure(TRAIN_DATA_DIR,
+                                  TRAIN_IMAGES_DIR,
+                                  TEST_IMAGES_DIR,
+                                  BACKUP,
+                                  YOLO_LABEL)
+
+    pneumonia_functions.yolo_parameters(PROJECT_DIR,
+                                        TRAIN_DATA_DIR,
+                                        BACKUP,
+                                        args.batch,
+                                        args.subdivisions,
+                                        OBJ_NBR,
+                                        ["pneumonia"])
+
+    original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
+
+    train_df, val_df, pneumonia_df, non_pneumonia_df = pneumonia_functions.data_preprocessing(
+        original_dataset,
+        args.split_rate)
+
+    pneumonia_functions.yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
+
+    pneumonia_functions.yolo_label_generation(original_dataset, TRAIN_IMAGES_DIR, IMAGE_SIZE)
+
+    pneumonia_functions.yolo_image_path_file(train_df,
+                                             TRAIN_DATA_DIR,
+                                             TRAIN_IMAGES_DIR,
+                                             "train.txt")
+    pneumonia_functions.yolo_image_path_file(val_df,
+                                             TRAIN_DATA_DIR,
+                                             TRAIN_IMAGES_DIR,
+                                             "val.txt")
+
+    print('''[INFO] To lauch the training, please enter the following command in your terminal :\n
+    ./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74\
+    -i 0 | tee train_log.txt\n
+    Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
+
+
+def pre_detection(args):
+    '''Lauch all necessary steps to set up Yolo v3 algorithm before objects detection'''
+    IMAGE_DIR = args.origin_folder
+    INPUT_TEST_DATA_DIR = args.origin_folder + "stage_2_test_images/"
+    PROJECT_DIR = args.project_folder
+    TEST_DATA_DIR = PROJECT_DIR + "detect_results/"
+    TEST_IMAGES_DIR = PROJECT_DIR + "detect_results/obj/"
+    FILE_TEST = "stage_2_sample_submission.csv"
+
+    test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
+    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
+    cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR, TEST_DATA_DIR, 832)
+
+    return cfg_file
+
+
+def main():
+    '''Allow the selection between algorithm training or image detection'''
+    args = create_parser()
+    check_inputs(args)
+
+    if args.preprocessing:
+        pre_trainning(args)
+
+    if args.detection:
+        cfg = pre_detection(args)
+
+        if args.image:
+            pneumonia_detection.detect(args.image,
+                                       args.weights_path,
+                                       cfg,
+                                       args.confidence,
+                                       args.threshold)
+#        if args.image_folder:
 
 
 if __name__ == "__main__":

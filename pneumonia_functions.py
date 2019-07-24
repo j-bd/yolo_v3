@@ -33,11 +33,11 @@ OBJ_NBR = 1
 YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
 
 
-def yolo_cfg_file(batch, subd, class_nbr):
+def yolo_cfg_file(project_dir, train_data_dir, batch, subd, class_nbr):
     '''Generate the config file for yolo v3 training
     We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
     regarding the context and save it under 'yolo-obj.cfg' in data directory'''
-    input_cfg = PROJECT_DIR + "darknet/cfg/yolov3.cfg"
+    input_cfg = project_dir + "darknet/cfg/yolov3.cfg"
     with open(input_cfg, 'r') as cfg_in:
         new_cfg = cfg_in.read()
 
@@ -51,47 +51,31 @@ def yolo_cfg_file(batch, subd, class_nbr):
     new_cfg = new_cfg.replace('classes=80', 'classes=' + str(class_nbr))
     new_cfg = new_cfg.replace('filters=255', 'filters=' + filter_yolo)
 
-    output_cfg = TRAIN_DATA_DIR + "yolo-obj.cfg"
+    output_cfg = train_data_dir + "yolo-obj.cfg"
     with open(output_cfg, 'w') as cfg_out:
         cfg_out.write(new_cfg)
 
 
-def test_cfg_file(size):
-    '''Create a new '.cfg' file for yolo v3 detection as recommand by authors. We increase the
-    network-resolution by changing the size of 'height' and 'width'. Note that we need to keep a
-    value multiple of 32'''
-    input_cfg = PROJECT_DIR + "darknet/cfg/yolov3.cfg"
-    with open(input_cfg, 'r') as cfg_in:
-        new_cfg = cfg_in.read()
-
-    new_cfg = new_cfg.replace('width=608', 'width=' + str(size))
-    new_cfg = new_cfg.replace('height=608', 'height=' + str(size))
-
-    output_cfg = TEST_DATA_DIR + "yolo-obj_test.cfg"
-    with open(output_cfg, 'w') as cfg_out:
-        cfg_out.write(new_cfg)
-
-
-def yolo_names_file(list_names):
+def yolo_names_file(train_data_dir, list_names):
     '''Generate the file gathering all object class names for yolo v3 training
     We except a list of string and save it under 'obj.names' in data directory'''
-    names_file = TRAIN_DATA_DIR + "obj.names"
+    names_file = train_data_dir + "obj.names"
     with open(names_file, 'w') as names:
         for obj_name in list_names:
             line = "{}\n".format(obj_name)
             names.write(line)
 
 
-def yolo_data_file(class_nbr):
+def yolo_data_file(train_data_dir, backup, class_nbr):
     '''Generate the file with paths for yolo v3 training
     The file will be save under 'obj.data' in data directory'''
-    data_file = TRAIN_DATA_DIR + "obj.data"
+    data_file = train_data_dir + "obj.data"
     with open(data_file, 'w') as data:
         line = f"classes = {class_nbr}\n"\
-        f"train = {TRAIN_DATA_DIR + 'train.txt'}\n"\
-        f"valid = {TRAIN_DATA_DIR + 'val.txt'}\n"\
-        f"names = {TRAIN_DATA_DIR + 'obj.names'}\n"\
-        f"backup = {BACKUP}"
+        f"train = {train_data_dir + 'train.txt'}\n"\
+        f"valid = {train_data_dir + 'val.txt'}\n"\
+        f"names = {train_data_dir + 'obj.names'}\n"\
+        f"backup = {backup}"
         data.write(line)
 
 
@@ -108,7 +92,7 @@ def yolo_jpg_file(dataset, origin_folder, target_folder):
         cv2.imwrite(target_folder + image_name + ".jpg", image)
 
 
-def yolo_label_generation(dataset, target_folder):
+def yolo_label_generation(dataset, target_folder, image_size):
     '''Generate label in the shape of yolo_v3 learning CNN:
     <object-class> <x_center> <y_center> <width> <height>
     relative value is required by yolo_v3 algorithm.
@@ -120,10 +104,10 @@ def yolo_label_generation(dataset, target_folder):
         with open(label_file, "w+") as file:
             for x, y, w, h, cl in groupe.iloc[:, 1:].values:
                 if cl:
-                    rel_w = w / IMAGE_SIZE
-                    rel_h = h / IMAGE_SIZE
-                    rel_x_center = x / IMAGE_SIZE + rel_w / 2
-                    rel_y_center = y / IMAGE_SIZE + rel_h / 2
+                    rel_w = w / image_size
+                    rel_h = h / image_size
+                    rel_x_center = x / image_size + rel_w / 2
+                    rel_y_center = y / image_size + rel_h / 2
                     line = f"{int(cl - 1)} "\
                     f"{rel_x_center} "\
                     f"{rel_y_center} "\
@@ -132,12 +116,12 @@ def yolo_label_generation(dataset, target_folder):
                     file.write(line)
 
 
-def yolo_image_path_file(dataset, target_folder, file_name):
+def yolo_image_path_file(dataset, target_folder, train_images_dir, file_name):
     '''Generate a 'txt' file with the path and the name of each image'''
     txt_file = target_folder + file_name
     with open(txt_file, "w+") as file:
         for image_name in dataset.iloc[:, 0].unique():
-            line = "{}\n".format(TRAIN_IMAGES_DIR + image_name + ".jpg")
+            line = "{}\n".format(train_images_dir + image_name + ".jpg")
             file.write(line)
 
 
@@ -174,20 +158,20 @@ def data_preprocessing(dataset, split_rate):
     return train, val, positive, negative
 
 
-def yolo_parameters(batch, subdivisions, obj, list_obj):
+def yolo_parameters(project_dir, train_data_dir, backup, batch, subdivisions, obj, list_obj):
     '''Create all files wich will be used by Yolo v3 algorithm during the learning process'''
-    yolo_cfg_file(batch, subdivisions, obj)
-    yolo_names_file(list_obj)
-    yolo_data_file(obj)
+    yolo_cfg_file(project_dir, train_data_dir, batch, subdivisions, obj)
+    yolo_names_file(train_data_dir, list_obj)
+    yolo_data_file(train_data_dir, backup, obj)
 
 
-def structure():
+def structure(train_data_dir, train_images_dir, test_images_dir, backup, yolo_label):
     '''Create the structure for the project and downoald necessary file'''
-    os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
-    os.makedirs(TEST_IMAGES_DIR, exist_ok=True)
-    os.makedirs(BACKUP, exist_ok=True)
+    os.makedirs(train_images_dir, exist_ok=True)
+    os.makedirs(test_images_dir, exist_ok=True)
+    os.makedirs(backup, exist_ok=True)
 
-    copy_tree(YOLO_LABEL, TRAIN_DATA_DIR + "labels/")
+    copy_tree(yolo_label, train_data_dir + "labels/")
 
     print(f"[INFO] Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
 
@@ -228,25 +212,25 @@ def loss_function(file_path):
 # =============================================================================
 # Yolo v3 files and parameters preparation
 # =============================================================================
-structure()
-
-yolo_parameters(64, 16, OBJ_NBR, ["pneumonia"])
-
-original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
-
-train_df, val_df, pneumonia_df, non_pneumonia_df = data_preprocessing(original_dataset, 0.8)
-
-yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
-
-yolo_label_generation(original_dataset, TRAIN_IMAGES_DIR)
-
-yolo_image_path_file(train_df, TRAIN_DATA_DIR, "train.txt")
-yolo_image_path_file(val_df, TRAIN_DATA_DIR, "val.txt")
-
-print('''[INFO] To lauch the training, please enter the following command in your terminal :\n
-./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74\
--i 0 | tee train_log.txt\n
-Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
+#structure()
+#
+#yolo_parameters(64, 16, OBJ_NBR, ["pneumonia"])
+#
+#original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
+#
+#train_df, val_df, pneumonia_df, non_pneumonia_df = data_preprocessing(original_dataset, 0.8)
+#
+#yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
+#
+#yolo_label_generation(original_dataset, TRAIN_IMAGES_DIR)
+#
+#yolo_image_path_file(train_df, TRAIN_DATA_DIR, "train.txt")
+#yolo_image_path_file(val_df, TRAIN_DATA_DIR, "val.txt")
+#
+#print('''[INFO] To lauch the training, please enter the following command in your terminal :\n
+#./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74\
+#-i 0 | tee train_log.txt\n
+#Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
 
 
 # =============================================================================

@@ -11,6 +11,24 @@ import numpy as np
 import cv2
 
 
+def test_cfg_file(project_dir, test_data_dir, size):
+    '''Create a new '.cfg' file for yolo v3 detection as recommand by authors. We increase the
+    network-resolution by changing the size of 'height' and 'width'. Note that we need to keep a
+    value multiple of 32'''
+    input_cfg = project_dir + "darknet/cfg/yolov3.cfg"
+    with open(input_cfg, 'r') as cfg_in:
+        new_cfg = cfg_in.read()
+
+    new_cfg = new_cfg.replace('width=608', 'width=' + str(size))
+    new_cfg = new_cfg.replace('height=608', 'height=' + str(size))
+
+    output_cfg = test_data_dir + "yolo-obj_test.cfg"
+    with open(output_cfg, 'w') as cfg_out:
+        cfg_out.write(new_cfg)
+
+    return output_cfg
+
+
 def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.0025):
     '''Detection of pneumonia on images'''
     #Load YOLOv3 structure
