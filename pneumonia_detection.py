@@ -51,25 +51,22 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
     # initialize our lists of detected bounding boxes, confidences
     boxes = []
     confidences = []
-    # loop over each of the layer outputs
     for output in layerOutputs:
-        # loop over each of the detections
         for detection in output:
-            # extract the confidence of pneumonia detection if it does exist
-            # returns the center (x, y)-coordinates of the box followed the width and height
-            conf = detection[5]
-            if conf > confidence:
+            # if pneumonia have been detect, returns the center (x, y)-coordinates of the box,
+            # followed by the width, the height and finally the confidence
+            if detection[5] > confidence:
                 #transform coordinates from relative size to image size
                 box = detection[0:4] * np.array([W, H, W, H])
                 (centerX, centerY, width, height) = box.astype("int")
-                # use the center (x, y)-coordinates to derive the top and
+                # use the center (x, y)-coordinates to derive the top
                 # and left corner of the bounding box
                 x = int(centerX - (width / 2))
                 y = int(centerY - (height / 2))
                 # update our list of bounding box coordinates, confidences,
                 # and class IDs
                 boxes.append([x, y, int(width), int(height)])
-                confidences.append(float(conf))
+                confidences.append(float(detection[5]))
     # apply non-maxima suppression to suppress weak, overlapping bounding
     # boxes
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, confidence, threshold)

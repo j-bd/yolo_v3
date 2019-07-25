@@ -198,9 +198,13 @@ def main():
         pre_trainning(args)
 
     if args.detection:
-        cfg, images = pre_detection(args)
+        cfg_path, images = pre_detection(args)
         for image in images :
-            pneumonia_detection.detect(image, args.weights_path, cfg, args.confidence, args.threshold)
+            pneumonia_detection.detect(image,
+                                       args.weights_path,
+                                       cfg_path,
+                                       args.confidence,
+                                       args.threshold)
 
 
 if __name__ == "__main__":
