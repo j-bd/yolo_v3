@@ -182,7 +182,11 @@ def pre_detection(args):
     pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
     cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR, TEST_DATA_DIR, 832)
 
-    return cfg_file
+    images_to_detect = list()
+    for image_name in test_dataset.iloc[:, 0].unique():
+        images_to_detect.append(TEST_IMAGES_DIR + image_name + ".jpg")
+
+    return cfg_file, images_to_detect
 
 
 def main():
@@ -194,15 +198,9 @@ def main():
         pre_trainning(args)
 
     if args.detection:
-        cfg = pre_detection(args)
-
-        if args.image:
-            pneumonia_detection.detect(args.image,
-                                       args.weights_path,
-                                       cfg,
-                                       args.confidence,
-                                       args.threshold)
-#        if args.image_folder:
+        cfg, images = pre_detection(args)
+        for image in images :
+            pneumonia_detection.detect(image, args.weights_path, cfg, args.confidence, args.threshold)
 
 
 if __name__ == "__main__":
