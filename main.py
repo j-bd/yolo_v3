@@ -189,7 +189,7 @@ def pre_detection(args):
     final_result = list()
     final_result.append("patientId,PredictionString")
 
-    return cfg_file, images_to_detect, final_result
+    return cfg_file, images_to_detect, final_result, TEST_DATA_DIR
 
 
 def main():
@@ -201,7 +201,7 @@ def main():
         pre_trainning(args)
 
     if args.detection:
-        cfg_path, images, result = pre_detection(args)
+        cfg_path, images, result, output_path = pre_detection(args)
         for image in images:
             box = pneumonia_detection.detect(image,
                                              args.weights_path,
@@ -209,6 +209,9 @@ def main():
                                              args.confidence,
                                              args.threshold)
             result.append(box)
+        pneumonia_detection.submission_file(output_path, result)
+
+        print("[INFO] All images have been proceed")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
 """
 Created on Fri Jul 12 11:51:18 2019
 
@@ -9,6 +10,14 @@ import time
 
 import numpy as np
 import cv2
+
+
+def submission_file(output_path, result):
+    '''Create a '.csv' file with all analysis to be exported to Kaggle'''
+    with open(output_path, 'w') as file:
+        for line in result:
+            line = line + "\n"
+            file.write(line)
 
 
 def test_cfg_file(project_dir, test_data_dir, size):
@@ -79,8 +88,8 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
             # extract the bounding box coordinates
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
-            final_boxes.append(str(confidences[i]) + "," + str(x) + " " + str(y) + " " + str(w) +
-                                   " " + str(h) + " ")
+            final_boxes.append(str(round(confidences[i], 2)) + " " + str(x) + " " + str(y) + " " +
+                               str(w) + " " + str(h) + " ")
             if show:
                 # draw a bounding box rectangle and label on the image
                 color = (0, 0, 255)
@@ -90,12 +99,13 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
                 # show the output image
                 cv2.imshow("Image", image)
 
-    return final_boxes
+    return ''.join(final_boxes)
 
 
-project_dir_path = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
-weights_path = project_dir_path + "test_data/p_1400.weights"
-config_path = project_dir_path + "test_data/yolo-obj_test.cfg"
-image_path = project_dir_path + "test_data/obj/0a8d486f-1aa6-4fcf-b7be-4bf04fc8628b.jpg"
-#/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/test_data/obj/0a9c4c04-5918-48da-9ba1-b2a3add66ae9.jpg
-detect(image_path, weights_path, config_path, 0.5, 0.0025)
+#project_dir_path = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
+#weights_path = project_dir_path + "test_data/p_1400.weights"
+#config_path = project_dir_path + "test_data/yolo-obj_test.cfg"
+#image_path = project_dir_path + "test_data/obj/0a8d486f-1aa6-4fcf-b7be-4bf04fc8628b.jpg"
+##/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/test_data/obj/
+##0a9c4c04-5918-48da-9ba1-b2a3add66ae9.jpg
+#detect(image_path, weights_path, config_path, 0.5, 0.0025)
