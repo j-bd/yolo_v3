@@ -186,7 +186,10 @@ def pre_detection(args):
     for image_name in test_dataset.iloc[:, 0].unique():
         images_to_detect.append(TEST_IMAGES_DIR + image_name + ".jpg")
 
-    return cfg_file, images_to_detect
+    final_result = list()
+    final_result.append("patientId,PredictionString")
+
+    return cfg_file, images_to_detect, final_result
 
 
 def main():
@@ -198,13 +201,14 @@ def main():
         pre_trainning(args)
 
     if args.detection:
-        cfg_path, images = pre_detection(args)
-        for image in images :
-            pneumonia_detection.detect(image,
-                                       args.weights_path,
-                                       cfg_path,
-                                       args.confidence,
-                                       args.threshold)
+        cfg_path, images, result = pre_detection(args)
+        for image in images:
+            box = pneumonia_detection.detect(image,
+                                             args.weights_path,
+                                             cfg_path,
+                                             args.confidence,
+                                             args.threshold)
+            result.append(box)
 
 
 if __name__ == "__main__":

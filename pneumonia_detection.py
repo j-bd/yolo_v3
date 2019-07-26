@@ -29,7 +29,7 @@ def test_cfg_file(project_dir, test_data_dir, size):
     return output_cfg
 
 
-def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.0025):
+def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.0025, show=False):
     '''Detection of pneumonia on images'''
     #Load YOLOv3 structure
     net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
@@ -49,8 +49,10 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
     print(f"[INFO] Processing time : {end - start}seconds")
 
     # initialize our lists of detected bounding boxes, confidences
-    boxes = []
-    confidences = []
+    boxes = list()
+    confidences = list()
+    final_boxes = list()
+    final_boxes.append(image_path.split(sep="/")[-1].split(sep=".")[0] + ",")
     for output in layerOutputs:
         for detection in output:
             # if pneumonia have been detect, returns the center (x, y)-coordinates of the box,
@@ -77,19 +79,23 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
             # extract the bounding box coordinates
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
-            # draw a bounding box rectangle and label on the image
-            color = (0, 0, 255)
-            cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
-            text = "Pneumonia: {:.4f}".format(confidences[i])
-            cv2.putText(image, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            final_boxes.append(str(confidences[i]) + "," + str(x) + " " + str(y) + " " + str(w) +
+                                   " " + str(h) + " ")
+            if show:
+                # draw a bounding box rectangle and label on the image
+                color = (0, 0, 255)
+                cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
+                text = "Pneumonia: {:.4f}".format(confidences[i])
+                cv2.putText(image, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                # show the output image
+                cv2.imshow("Image", image)
 
-    # show the output image
-    cv2.imshow("Image", image)
+    return final_boxes
 
 
-#project_dir_path = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
-#weights_path = project_dir_path + "test_data/p_1400.weights"
-#config_path = project_dir_path + "test_data/yolo-obj_test.cfg"
-#image_path = project_dir_path + "test_data/obj/0a8d486f-1aa6-4fcf-b7be-4bf04fc8628b.jpg"
-##/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/test_data/obj/0a9c4c04-5918-48da-9ba1-b2a3add66ae9.jpg
-#detect(image_path, weights_path, config_path, 0.5, 0.0025)
+project_dir_path = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
+weights_path = project_dir_path + "test_data/p_1400.weights"
+config_path = project_dir_path + "test_data/yolo-obj_test.cfg"
+image_path = project_dir_path + "test_data/obj/0a8d486f-1aa6-4fcf-b7be-4bf04fc8628b.jpg"
+#/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/test_data/obj/0a9c4c04-5918-48da-9ba1-b2a3add66ae9.jpg
+detect(image_path, weights_path, config_path, 0.5, 0.0025)
