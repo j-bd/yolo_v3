@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=invalid-name
 """
 Created on Fri Jul 12 11:51:18 2019
 
@@ -100,12 +99,3 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
                 cv2.imshow("Image", image)
 
     return ''.join(final_boxes)
-
-
-#project_dir_path = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
-#weights_path = project_dir_path + "test_data/p_1400.weights"
-#config_path = project_dir_path + "test_data/yolo-obj_test.cfg"
-#image_path = project_dir_path + "test_data/obj/0a8d486f-1aa6-4fcf-b7be-4bf04fc8628b.jpg"
-##/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/test_data/obj/
-##0a9c4c04-5918-48da-9ba1-b2a3add66ae9.jpg
-#detect(image_path, weights_path, config_path, 0.5, 0.0025)

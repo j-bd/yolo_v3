@@ -2,5 +2,7 @@ data/obj/
 data/labels/
 darknet53.conv.74
 backup_log
-test_data
+detect_results
+draft
+__pycache__
 train_log.txt

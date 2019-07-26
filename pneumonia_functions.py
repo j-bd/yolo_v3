@@ -5,7 +5,6 @@ Created on Tue Jun 25 11:01:49 2019
 
 @author: j-bd
 """
-
 import os
 from distutils.dir_util import copy_tree
 
@@ -15,22 +14,6 @@ import pandas as pd
 import pydicom
 import cv2
 import wget
-
-
-IMAGE_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/data/"
-INPUT_TRAIN_DATA_DIR = IMAGE_DIR + "stage_2_train_images/"
-INPUT_TEST_DATA_DIR = IMAGE_DIR + "stage_2_test_images/"
-PROJECT_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/"
-TRAIN_DATA_DIR = PROJECT_DIR + "data/"
-TRAIN_IMAGES_DIR = TRAIN_DATA_DIR + "obj/"
-TEST_DATA_DIR = PROJECT_DIR + "detect_results/"
-TEST_IMAGES_DIR = TEST_DATA_DIR + "obj/"
-BACKUP = PROJECT_DIR + "backup_log/"
-FILE_TRAIN = "stage_2_train_labels.csv"
-FILE_TEST = "stage_2_sample_submission.csv"
-IMAGE_SIZE = 1024
-OBJ_NBR = 1
-YOLO_LABEL = PROJECT_DIR + "darknet/data/labels/"
 
 
 def yolo_cfg_file(project_dir, train_data_dir, batch, subd, class_nbr):
@@ -125,12 +108,12 @@ def yolo_image_path_file(dataset, target_folder, train_images_dir, file_name):
             file.write(line)
 
 
-def yolo_pre_trained_weights(link):
+def yolo_pre_trained_weights(link, path):
     '''Download the pre-trained weights darknet53.conv.74 (162.5MB)'''
     url = link
     print("[INFO] Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB)."\
           "Please wait")
-    wget.download(url, out=PROJECT_DIR)
+    wget.download(url, out=path)
 
 
 def data_preprocessing(dataset, split_rate):
@@ -165,7 +148,7 @@ def yolo_parameters(project_dir, train_data_dir, backup, batch, subdivisions, ob
     yolo_data_file(train_data_dir, backup, obj)
 
 
-def structure(train_data_dir, train_images_dir, test_images_dir, backup, yolo_label):
+def structure(train_data_dir, train_images_dir, test_images_dir, backup, yolo_label, proj_dir):
     '''Create the structure for the project and downoald necessary file'''
     os.makedirs(train_images_dir, exist_ok=True)
     os.makedirs(test_images_dir, exist_ok=True)
@@ -173,22 +156,22 @@ def structure(train_data_dir, train_images_dir, test_images_dir, backup, yolo_la
 
     copy_tree(yolo_label, train_data_dir + "labels/")
 
-    print(f"[INFO] Please, clone yolov3 package in '{PROJECT_DIR}' if it's not already done.")
+    print(f"[INFO] Please, clone yolov3 package in '{proj_dir}' if it's not already done.")
 
-    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74")
+    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74", proj_dir)
 
 
-def visualisation(dataset, index_patient):
+def visualisation(image_dir_path, dataset, index_patient):
     '''Display pneumonia or not image with or without the box'''
     if dataset.iloc[index_patient, -1]:
         patient_box = dataset[dataset.iloc[:, 0] == dataset.iloc[index_patient, 0]]
         for x, y, w, h in patient_box.iloc[:, 1:5].values:
             plt.plot([x, x, x+w, x+w, x], [y, y+h, y+h, y, y], label="pneumonia")
-        plt.imshow(cv2.imread(TRAIN_IMAGES_DIR + dataset.iloc[index_patient, 0] + '.jpg'))
+        plt.imshow(cv2.imread(image_dir_path + dataset.iloc[index_patient, 0] + '.jpg'))
         plt.title("Pneumonia")
         plt.legend()
     else:
-        plt.imshow(cv2.imread(TRAIN_IMAGES_DIR + dataset.iloc[index_patient, 0] + '.jpg'))
+        plt.imshow(cv2.imread(image_dir_path + dataset.iloc[index_patient, 0] + '.jpg'))
         plt.title("No pneumonia")
 
 
@@ -207,43 +190,3 @@ def loss_function(file_path):
         plt.legend()
         plt.xlabel("Number of iterations")
         plt.ylabel("Loss value")
-
-
-# =============================================================================
-# Yolo v3 files and parameters preparation
-# =============================================================================
-#structure()
-#
-#yolo_parameters(64, 16, OBJ_NBR, ["pneumonia"])
-#
-#original_dataset = pd.read_csv(IMAGE_DIR + FILE_TRAIN)
-#
-#train_df, val_df, pneumonia_df, non_pneumonia_df = data_preprocessing(original_dataset, 0.8)
-#
-#yolo_jpg_file(original_dataset, INPUT_TRAIN_DATA_DIR, TRAIN_IMAGES_DIR)
-#
-#yolo_label_generation(original_dataset, TRAIN_IMAGES_DIR)
-#
-#yolo_image_path_file(train_df, TRAIN_DATA_DIR, "train.txt")
-#yolo_image_path_file(val_df, TRAIN_DATA_DIR, "val.txt")
-#
-#print('''[INFO] To lauch the training, please enter the following command in your terminal :\n
-#./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74\
-#-i 0 | tee train_log.txt\n
-#Be sure to be in your Master Directory: {}'''.format(PROJECT_DIR))
-
-
-# =============================================================================
-# Launching test
-# =============================================================================
-test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
-yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
-
-test_cfg_file(832)
-
-
-#./darknet/darknet detector test data/obj.data test_data/yolo-obj_test.cfg test_data/p_1400.weights
-LAST_DIR = "/home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/last/"
-df_last = test_dataset.iloc[:30, :]
-yolo_jpg_file(df_last, INPUT_TEST_DATA_DIR, LAST_DIR)
-yolo_image_path_file(df_last, TRAIN_DATA_DIR, "test.txt")

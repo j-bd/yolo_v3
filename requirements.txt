@@ -1,0 +1,10 @@
+Python 3.6.7
+argparse 1.1
+distutils 3.6.7
+matplotlib 3.0.3
+numpy 1.16.3
+pandas 0.23.3
+pydicom 1.2.2
+cv2 4.0.0
+wget 3.2
+

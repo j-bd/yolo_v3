@@ -134,7 +134,8 @@ def pre_trainning(args):
                                   TRAIN_IMAGES_DIR,
                                   TEST_IMAGES_DIR,
                                   BACKUP,
-                                  YOLO_LABEL)
+                                  YOLO_LABEL,
+                                  PROJECT_DIR)
 
     pneumonia_functions.yolo_parameters(PROJECT_DIR,
                                         TRAIN_DATA_DIR,
@@ -171,9 +172,9 @@ def pre_trainning(args):
 
 def pre_detection(args):
     '''Lauch all necessary steps to set up Yolo v3 algorithm before objects detection'''
-    IMAGE_DIR = args.origin_folder
-    INPUT_TEST_DATA_DIR = args.origin_folder + "stage_2_test_images/"
-    PROJECT_DIR = args.project_folder
+    IMAGE_DIR = args.origin_folder + "/"
+    INPUT_TEST_DATA_DIR = args.origin_folder + "/stage_2_test_images/"
+    PROJECT_DIR = args.project_folder + "/"
     TEST_DATA_DIR = PROJECT_DIR + "detect_results/"
     TEST_IMAGES_DIR = PROJECT_DIR + "detect_results/obj/"
     FILE_TEST = "stage_2_sample_submission.csv"
