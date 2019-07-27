@@ -36,8 +36,8 @@ def test_cfg_file(project_dir, test_data_dir, size):
 
     return output_cfg
 
-
-def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.0025, show=False):
+#confidence=0.5, threshold=0.0025
+def detect(image_path, weights_path, config_path, confidence, threshold, show=False):
     '''Detection of pneumonia on images'''
     #Load YOLOv3 structure
     net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
@@ -54,7 +54,6 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
     start = time.time()
     layerOutputs = net.forward(ln)
     end = time.time()
-    print(f"[INFO] Processing time : {end - start}seconds")
 
     # initialize our lists of detected bounding boxes, confidences
     boxes = list()
@@ -97,5 +96,7 @@ def detect(image_path, weights_path, config_path, confidence=0.5, threshold=0.00
                 cv2.putText(image, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                 # show the output image
                 cv2.imshow("Image", image)
+
+    print(f"[INFO] Processing time : {round(end - start, 2)}seconds - {len(idxs)} object(s) detected")
 
     return ''.join(final_boxes)

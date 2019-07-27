@@ -72,17 +72,11 @@ def create_parser():
                         help="split rate between train and validation dataset during yolo training")
     parser.add_argument("-d", "--detection",
                         help="command to detect pneumonia object on image")
-    parser.add_argument("-i", "--image",
-                        help="path to input image for detection")
-    parser.add_argument("-if", "--image_folder",
-                        help="path to input images folder for detection")
     parser.add_argument("-w", "--weights_path",
                         help="Path to the weights file used by Yolo algorith to detect object")
-    parser.add_argument("-cfg", "--config_path",
-                        help="Path to the config file used by Yolo algorith to detect object")
-    parser.add_argument("-c", "--confidence", type=float, default=0.5,
+    parser.add_argument("-c", "--confidence", type=float, default=0.7,
                         help="minimum probability to filter weak detections")
-    parser.add_argument("-t", "--threshold", type=float, default=0.3,
+    parser.add_argument("-t", "--threshold", type=float, default=0.0015,
                         help="threshold when applying non-maxima suppression")
     parser.add_argument("-dis", "--detect_im_size", type=int, default=832,
                         help="resize input image to improve the detection"\
@@ -104,14 +98,8 @@ def check_inputs(args):
             raise ValueError(f"Split rate must be between 0,7 and 0.95,"\
                              "currently {args.split_rate}")
     if args.detection:
-        if args.image and args.image_folder is None:
-            raise ValueError("Path to image or images folder is missing")
-        if args.image and args.image_folder is not None:
-            raise ValueError("Choose between an image or images directory but not both")
         if args.weights_path is None:
             raise ValueError("Missing path to Yolo weights file used for detection")
-        if args.weights_path is None:
-            raise ValueError("Missing path to Yolo config file used for detection")
         if not args.detect_im_size % 32 == 0:
             raise ValueError("Detection image size must be a multiple of 32")
 
@@ -180,8 +168,8 @@ def pre_detection(args):
     FILE_TEST = "stage_2_sample_submission.csv"
 
     test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
-    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
-    cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR, TEST_DATA_DIR, 832)
+#    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
+    cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR, TEST_DATA_DIR, args.detect_im_size)
 
     images_to_detect = list()
     for image_name in test_dataset.iloc[:, 0].unique():
@@ -190,7 +178,7 @@ def pre_detection(args):
     final_result = list()
     final_result.append("patientId,PredictionString")
 
-    return cfg_file, images_to_detect, final_result, TEST_DATA_DIR
+    return cfg_file, images_to_detect, final_result, TEST_DATA_DIR + "stage_2_submission.csv"
 
 
 def main():
@@ -204,6 +192,7 @@ def main():
     if args.detection:
         cfg_path, images, result, output_path = pre_detection(args)
         for image in images:
+            print("[INFO] ", images.index(image)+ 1, "/", len(images))
             box = pneumonia_detection.detect(image,
                                              args.weights_path,
                                              cfg_path,
