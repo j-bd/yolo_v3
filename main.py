@@ -76,9 +76,9 @@ def create_parser():
                         help="Path to the weights file used by Yolo algorith to detect object")
     parser.add_argument("-c", "--confidence", type=float, default=0.7,
                         help="minimum probability to filter weak detections")
-    parser.add_argument("-t", "--threshold", type=float, default=0.0015,
+    parser.add_argument("-t", "--threshold", type=float, default=0.025,
                         help="threshold when applying non-maxima suppression")
-    parser.add_argument("-dis", "--detect_im_size", type=int, default=832,
+    parser.add_argument("-dis", "--detect_im_size", type=int, default=640,
                         help="resize input image to improve the detection"\
                         "(must be a multiple of 32)")
     args = parser.parse_args()
@@ -178,7 +178,7 @@ def pre_detection(args):
     final_result = list()
     final_result.append("patientId,PredictionString")
 
-    return cfg_file, images_to_detect, final_result, TEST_DATA_DIR + "stage_2_submission.csv"
+    return cfg_file, images_to_detect, final_result, TEST_DATA_DIR + "submission.csv"
 
 
 def main():
