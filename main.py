@@ -11,13 +11,13 @@ directory:
     A directory with your images train named 'stage_2_train_images'
     A detailled CSV file train labels named 'stage_2_train_labels.csv'
     A detailled CSV file for submission named 'stage_2_sample_submission.csv'
-All this elements must be gather in the same directory. The path will be mention in the following
-variable 'IMAGE_DIR'.
+All this elements must be gather in the same directory. The path will be mention when launching the
+algorithm.
 Source: https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data
 
 Before launching this algorithm, you need to clone darknet (yolov3 package) in your project
-directory (variable: PROJECT_DIR). To do it, please follow the instructions on this website:
-https://pjreddie.com/darknet/install/
+directory (to be created by yourself and mentionned when launching the algorithm). To do it, please
+follow the instructions on this website: https://pjreddie.com/darknet/install/
 Check options available before enter 'make' command as GPU and so on.
 
 To train yolo_v3 algorithm to detect our custom objects we need to follow this steps:
@@ -168,7 +168,7 @@ def pre_detection(args):
     FILE_TEST = "stage_2_sample_submission.csv"
 
     test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
-#    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
+    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
     cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR, TEST_DATA_DIR, args.detect_im_size)
 
     images_to_detect = list()
