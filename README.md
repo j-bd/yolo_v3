@@ -17,8 +17,6 @@ You can find more information directly on the [website](https://pjreddie.com/dar
 
 I used data made available by "Radiological Society of North America" on Kaggle. The challenge name is ["RSNA Pneumonia Detection Challenge"](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge).
 
-![Kaggle_rsna](https://storage.googleapis.com/kaggle-competitions/kaggle/10338/logos/header.png?t=2018-08-21-19-48-11)
-
 The second version of data is organised as :
 * A train folder with about 26 684 images,
 * A test folder with about 3 000 images,
@@ -33,7 +31,8 @@ Before launching this algorithm make sure the Kaggle data are organized as follo
 * A directory with your images train named 'stage_2_train_images'
 * A detailed CSV file train labels named 'stage_2_train_labels.csv'
 * A detailed CSV file for submission named 'stage_2_sample_submission.csv'
-All this elements must be gather in the same directory. The path will be mention when launching the algorithm.
+
+All this elements must be gather in the same directory. The path will be mentionned when launching the algorithm.
 [Source](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data)
 
 Before launching this algorithm, you need to clone darknet (yolov3 package) in your project directory (to be created by yourself and mentionned when launching the algorithm). To do it, please follow the instructions on this [website](https://pjreddie.com/darknet/install/).
