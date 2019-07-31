@@ -83,3 +83,12 @@ The file ```pneumonia_detection.py```is dedicated to the detection on the test i
 
 I offer the possibility to execute automatically all the algorithm trough ```main.py```
 
+
+## Terminal Command
+
+For all commands, please make sure to be located in the right folder.
+
+To lauch the preprocessing execution:
+```python main.py -p True -of path/to/raw/data/folder -pf path/to/your/project/folder -b 64 -s 16 -sr 0.8```
+The following arguments are mandatory: **-p** (preprocessing activation), **-of** (origin folder) and **-pf** (project folder)
+The following arguments are optionnals: **-b** (batch number, default value 64), **-s** (subdivisions number, default value 16) and **-sr** (split rate wich is the percent of trainning and validation images. It must be between 0.7 and 0.95. The default value is 0.7)
