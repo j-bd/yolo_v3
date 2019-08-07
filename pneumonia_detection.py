@@ -18,8 +18,7 @@ def submission_file(output_path, result):
             line = line + "\n"
             file.write(line)
 
-
-def test_cfg_file(project_dir, test_data_dir, size):
+def test_cfg_file(project_dir, test_data_dir, batch, subd, class_nbr, size):
     '''Create a new '.cfg' file for yolo v3 detection as recommand by authors. We increase the
     network-resolution by changing the size of 'height' and 'width'. Note that we need to keep a
     value multiple of 32'''
@@ -27,6 +26,15 @@ def test_cfg_file(project_dir, test_data_dir, size):
     with open(input_cfg, 'r') as cfg_in:
         new_cfg = cfg_in.read()
 
+    max_batches = 2000 * class_nbr
+    steps = str(max_batches * 0.8) + ',' + str(max_batches * 0.9)
+    filter_yolo = str((class_nbr + 5) * 3)
+    new_cfg = new_cfg.replace('batch=64', 'batch=' + str(batch))
+    new_cfg = new_cfg.replace('subdivisions=16', 'subdivisions=' + str(subd))
+    new_cfg = new_cfg.replace('max_batches = 500200', 'max_batches =' + str(max_batches))
+    new_cfg = new_cfg.replace('steps=400000,450000', 'steps=' + steps)
+    new_cfg = new_cfg.replace('classes=80', 'classes=' + str(class_nbr))
+    new_cfg = new_cfg.replace('filters=255', 'filters=' + filter_yolo)
     new_cfg = new_cfg.replace('width=608', 'width=' + str(size))
     new_cfg = new_cfg.replace('height=608', 'height=' + str(size))
 
@@ -36,7 +44,6 @@ def test_cfg_file(project_dir, test_data_dir, size):
 
     return output_cfg
 
-#confidence=0.5, threshold=0.0025
 def detect(image_path, weights_path, config_path, confidence, threshold, show=False):
     '''Detection of pneumonia on images'''
     #Load YOLOv3 structure
@@ -80,7 +87,7 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
     # boxes
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, confidence, threshold)
     # ensure at least one detection exists
-    if len(idxs) > 0:
+    if idxs:
         # loop over the indexes we are keeping
         for i in idxs.flatten():
             # extract the bounding box coordinates
@@ -97,6 +104,7 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
                 # show the output image
                 cv2.imshow("Image", image)
 
-    print(f"[INFO] Processing time : {round(end - start, 2)}seconds - {len(idxs)} object(s) detected")
+    print(f"[INFO] Processing time: {round(end - start, 2)}seconds "\
+          f"- {len(idxs)} object(s) detected")
 
     return ''.join(final_boxes)

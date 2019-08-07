@@ -168,9 +168,13 @@ def pre_detection(args):
     FILE_TEST = "stage_2_sample_submission.csv"
 
     test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
-    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
-    cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR, TEST_DATA_DIR, args.detect_im_size)
-
+#    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
+    cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR,
+                                                 TEST_DATA_DIR,
+                                                 64,
+                                                 16,
+                                                 1,
+                                                 args.detect_im_size)
     images_to_detect = list()
     for image_name in test_dataset.iloc[:, 0].unique():
         images_to_detect.append(TEST_IMAGES_DIR + image_name + ".jpg")
