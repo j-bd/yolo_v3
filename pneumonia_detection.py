@@ -87,7 +87,7 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
     # boxes
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, confidence, threshold)
     # ensure at least one detection exists
-    if idxs:
+    if len(idxs) > 0:
         # loop over the indexes we are keeping
         for i in idxs.flatten():
             # extract the bounding box coordinates

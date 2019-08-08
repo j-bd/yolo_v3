@@ -74,9 +74,9 @@ def create_parser():
                         help="command to detect pneumonia object on image")
     parser.add_argument("-w", "--weights_path",
                         help="Path to the weights file used by Yolo algorith to detect object")
-    parser.add_argument("-c", "--confidence", type=float, default=0.7,
+    parser.add_argument("-c", "--confidence", type=float, default=0.2,
                         help="minimum probability to filter weak detections")
-    parser.add_argument("-t", "--threshold", type=float, default=0.025,
+    parser.add_argument("-t", "--threshold", type=float, default=0.2,
                         help="threshold when applying non-maxima suppression")
     parser.add_argument("-dis", "--detect_im_size", type=int, default=640,
                         help="resize input image to improve the detection"\
@@ -168,7 +168,7 @@ def pre_detection(args):
     FILE_TEST = "stage_2_sample_submission.csv"
 
     test_dataset = pd.read_csv(IMAGE_DIR + FILE_TEST)
-#    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
+    pneumonia_functions.yolo_jpg_file(test_dataset, INPUT_TEST_DATA_DIR, TEST_IMAGES_DIR)
     cfg_file = pneumonia_detection.test_cfg_file(PROJECT_DIR,
                                                  TEST_DATA_DIR,
                                                  64,
