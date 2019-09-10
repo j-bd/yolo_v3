@@ -7,6 +7,8 @@ Created on Tue Jun 25 11:01:49 2019
 """
 import os
 from distutils.dir_util import copy_tree
+import argparse
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,12 +17,94 @@ import pydicom
 import cv2
 import wget
 
+import constants
+
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+
+def create_parser():
+    '''Get the informations from the operator'''
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-cmd", "--command", required=True,
+        help="choice between 'train' and 'detection'"
+    )
+    parser.add_argument(
+        "-of", "--origin_folder", required=True,
+        help="path to the Kaggle folder containing all data"
+    )
+    parser.add_argument(
+        "-pf", "--project_folder", required=True,
+        help="path to your project folder"
+    )
+    parser.add_argument(
+        "-b", "--batch", type=int, default=64,
+        help="batch number for yolo config file used during yolo training"
+    )
+    parser.add_argument(
+        "-s", "--subdivisions", type=int, default=16,
+        help="subdivisions number for yolo config file used during yolo training"
+    )
+    parser.add_argument(
+        "-sr", "--split_rate", type=float, default=0.8,
+        help="split rate between train and validation dataset during yolo training"
+    )
+    parser.add_argument(
+        "-w", "--weights_path",
+        help="Path to the weights file used by Yolo algorith to detect object"
+    )
+    parser.add_argument(
+        "-c", "--confidence", type=float, default=0.2,
+        help="minimum probability to filter weak detections"
+    )
+    parser.add_argument(
+        "-t", "--threshold", type=float, default=0.2,
+        help="threshold when applying non-maxima suppression"
+    )
+    parser.add_argument(
+        "-dis", "--detect_im_size", type=int, default=640,
+        help="resize input image to improve the detection(must be a multiple of 32)"
+    )
+    args = parser.parse_args()
+    return args
+
+
+def check_inputs(args):
+    '''Check if inputs are right'''
+    if args.command not in ["train", "detection"]:
+        raise ValueError(
+            "Your choice for '-c', '--command' must be 'train' or 'detection'."
+        )
+    if not os.path.isdir(args.origin_folder):
+        raise FileNotFoundError(
+            "Your choice for '-of', '--origin_folder' is not a valide directory."
+        )
+    if not os.path.isdir(args.project_folder):
+        raise FileNotFoundError(
+            "Your choice for '-pf', '--project_folder' is not a valide directory."
+        )
+    if not os.path.isdir(os.path.join(args.project_folder, "darknet")):
+        raise FileNotFoundError(
+            f"Please, clone darknet repository in '{args.project_folder}'."
+        )
+    if args.command == "train":
+        if not 0.7 <= args.split_rate <= 0.95:
+            raise ValueError(
+                f"Split rate must be between 0,7 and 0.95, currently {args.split_rate}"
+            )
+    if args.command == "detection":
+        if args.weights_path is None:
+            raise ValueError("Missing path to Yolo weights file used for detection")
+        if not args.detect_im_size % 32 == 0:
+            raise ValueError("Detection image size must be a multiple of 32")
+
 
 def yolo_cfg_file(project_dir, train_data_dir, batch, subd, class_nbr):
     '''Generate the config file for yolo v3 training
     We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
     regarding the context and save it under 'yolo-obj.cfg' in data directory'''
-    input_cfg = project_dir + "darknet/cfg/yolov3.cfg"
+    input_cfg = os.path.join(project_dir, "darknet/cfg/yolov3.cfg")
     with open(input_cfg, 'r') as cfg_in:
         new_cfg = cfg_in.read()
 
@@ -34,7 +118,7 @@ def yolo_cfg_file(project_dir, train_data_dir, batch, subd, class_nbr):
     new_cfg = new_cfg.replace('classes=80', 'classes=' + str(class_nbr))
     new_cfg = new_cfg.replace('filters=255', 'filters=' + filter_yolo)
 
-    output_cfg = train_data_dir + "yolo-obj.cfg"
+    output_cfg = os.path.join(train_data_dir, "yolo-obj.cfg")
     with open(output_cfg, 'w') as cfg_out:
         cfg_out.write(new_cfg)
 
@@ -42,7 +126,7 @@ def yolo_cfg_file(project_dir, train_data_dir, batch, subd, class_nbr):
 def yolo_names_file(train_data_dir, list_names):
     '''Generate the file gathering all object class names for yolo v3 training
     We except a list of string and save it under 'obj.names' in data directory'''
-    names_file = train_data_dir + "obj.names"
+    names_file = os.path.join(train_data_dir, "obj.names")
     with open(names_file, 'w') as names:
         for obj_name in list_names:
             line = "{}\n".format(obj_name)
@@ -52,7 +136,7 @@ def yolo_names_file(train_data_dir, list_names):
 def yolo_data_file(train_data_dir, backup, class_nbr):
     '''Generate the file with paths for yolo v3 training
     The file will be save under 'obj.data' in data directory'''
-    data_file = train_data_dir + "obj.data"
+    data_file = os.path.join(train_data_dir, "obj.data")
     with open(data_file, 'w') as data:
         line = f"classes = {class_nbr}\n"\
         f"train = {train_data_dir + 'train.txt'}\n"\
@@ -71,8 +155,8 @@ def dcm_to_array(image_path):
 def yolo_jpg_file(dataset, origin_folder, target_folder):
     '''Copy the choosen images in the right directory under jpg format'''
     for image_name in dataset.iloc[:, 0].unique():
-        image = dcm_to_array(origin_folder + image_name)
-        cv2.imwrite(target_folder + image_name + ".jpg", image)
+        image = dcm_to_array(os.path.join(origin_folder, image_name))
+        cv2.imwrite(os.path.join(target_folder, image_name + ".jpg"), image)
 
 
 def yolo_label_generation(dataset, target_folder, image_size):
@@ -83,7 +167,7 @@ def yolo_label_generation(dataset, target_folder, image_size):
     As mentionned in darknet repo, to improve results we need to add images without objects
     All created files will be saved in the same directory which contains jpg files'''
     for name, groupe in dataset.groupby("patientId"):
-        label_file = target_folder + "/" + name + ".txt"
+        label_file = os.path.join(target_folder, name + ".txt")
         with open(label_file, "w+") as file:
             for x, y, w, h, cl in groupe.iloc[:, 1:].values:
                 if cl:
@@ -101,41 +185,47 @@ def yolo_label_generation(dataset, target_folder, image_size):
 
 def yolo_image_path_file(dataset, target_folder, train_images_dir, file_name):
     '''Generate a 'txt' file with the path and the name of each image'''
-    txt_file = target_folder + file_name
+    txt_file = os.path.join(target_folder, file_name)
     with open(txt_file, "w+") as file:
         for image_name in dataset.iloc[:, 0].unique():
-            line = "{}\n".format(train_images_dir + image_name + ".jpg")
+            line = "{}\n".format(os.path.join(train_images_dir, image_name + ".jpg"))
             file.write(line)
 
 
 def yolo_pre_trained_weights(link, path):
     '''Download the pre-trained weights darknet53.conv.74 (162.5MB)'''
     url = link
-    print("[INFO] Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB)."\
-          "Please wait")
+    logging.info(
+        "Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB)."\
+        "Please wait"
+    )
     wget.download(url, out=path)
 
 
 def data_preprocessing(dataset, split_rate):
     '''Produce different datasets'''
-    #Dataframe with only images of pneumonia
+    # Dataframe with only images of pneumonia
     positive = dataset[dataset.iloc[:, -1] == 1]
     positive = positive.reset_index(drop=True)
     pos_size = len(positive)
 
-    #Dataframe with only images of non pneumonia. As required by the authors of Yolov3 we need to
-    #have DataFrames of same size
+    # Dataframe with only images of non pneumonia. As required by the authors of Yolov3 we need to
+    # have DataFrames of same size
     negative = dataset[dataset.iloc[:, -1] == 0]
     neg_size = min(len(positive.iloc[:, 0].unique()), len(negative))
     negative = negative.iloc[: neg_size, :]
     negative = negative.reset_index(drop=True)
 
-    #Train and validation dataframe
+    # Train and validation dataframe
     pos_split = int(pos_size * split_rate)
     neg_split = int(neg_size * split_rate)
-    train = pd.concat([positive.iloc[: pos_split, :], negative.iloc[: neg_split, :]], axis=0)
+    train = pd.concat(
+        [positive.iloc[: pos_split, :], negative.iloc[: neg_split, :]], axis=0
+    )
     train = train.reset_index(drop=True)
-    val = pd.concat([positive.iloc[pos_split:, :], negative.iloc[neg_split:, :]], axis=0)
+    val = pd.concat(
+        [positive.iloc[pos_split:, :], negative.iloc[neg_split:, :]], axis=0
+    )
     val = val.reset_index(drop=True)
 
     return train, val, positive, negative
@@ -154,11 +244,9 @@ def structure(train_data_dir, train_images_dir, test_images_dir, backup, yolo_la
     os.makedirs(test_images_dir, exist_ok=True)
     os.makedirs(backup, exist_ok=True)
 
-    copy_tree(yolo_label, train_data_dir + "labels/")
+    copy_tree(yolo_label, os.path.join(train_data_dir, "labels"))
 
-    print(f"[INFO] Please, clone yolov3 package in '{proj_dir}' if it's not already done.")
-
-    yolo_pre_trained_weights("https://pjreddie.com/media/files/darknet53.conv.74", proj_dir)
+    yolo_pre_trained_weights(constants.W_PATH, proj_dir)
 
 
 def visualisation(image_dir_path, dataset, index_patient):
@@ -167,11 +255,11 @@ def visualisation(image_dir_path, dataset, index_patient):
         patient_box = dataset[dataset.iloc[:, 0] == dataset.iloc[index_patient, 0]]
         for x, y, w, h in patient_box.iloc[:, 1:5].values:
             plt.plot([x, x, x+w, x+w, x], [y, y+h, y+h, y, y], label="pneumonia")
-        plt.imshow(cv2.imread(image_dir_path + dataset.iloc[index_patient, 0] + '.jpg'))
+        plt.imshow(cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg')))
         plt.title("Pneumonia")
         plt.legend()
     else:
-        plt.imshow(cv2.imread(image_dir_path + dataset.iloc[index_patient, 0] + '.jpg'))
+        plt.imshow(cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg')))
         plt.title("No pneumonia")
 
 
