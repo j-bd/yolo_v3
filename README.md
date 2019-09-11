@@ -13,6 +13,12 @@ The biggest interest of this algorithm is the speed of process:
 You can find more information directly on the [website](https://pjreddie.com/darknet/yolo/)
 
 
+## Installation
+
+Before launching this algorithm, you need to clone darknet (yolov3 package) in your project directory (to be created by yourself and mentionned when launching the algorithm). To do it, please follow the instructions on this [website](https://pjreddie.com/darknet/install/).
+Check options available before enter ```make``` command as GPU and so on.
+
+
 ## Data source
 
 I used data made available by "Radiological Society of North America" on Kaggle. The challenge name is ["RSNA Pneumonia Detection Challenge"](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge).
@@ -35,8 +41,8 @@ Before launching this algorithm make sure the Kaggle data are organized as follo
 All this elements must be gather in the same directory. The path will be mentionned when launching the algorithm.
 [Source](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data)
 
-Before launching this algorithm, you need to clone darknet (yolov3 package) in your project directory (to be created by yourself and mentionned when launching the algorithm). To do it, please follow the instructions on this [website](https://pjreddie.com/darknet/install/).
-Check options available before enter ```make``` command as GPU and so on.
+
+## Implementing YOLOv3 for our own dataset and process for the training:
 
 To train yolo_v3 algorithm to detect our custom objects we need to follow this steps:
 * Create a file named 'yolo-obj.cfg' as a configuration of the CNN (a custom copy of yolov3.cfg),
@@ -81,7 +87,7 @@ The file ```pneumonia_detection.py```is dedicated to the detection on the test i
 * launch detection on submitted image ```def detect```,
 * record all results under the right shape to be send to Kaggle ```def submission_file```.
 
-I offer the possibility to execute automatically all the algorithm trough ```main.py```
+I offer the possibility to execute automatically all the algorithm through ```main.py```
 
 
 ## Terminal Command
@@ -89,12 +95,24 @@ I offer the possibility to execute automatically all the algorithm trough ```mai
 For all commands, please make sure to be located in the project folder.
 
 To lauch the preprocessing execution:
-* ```python main.py -p True -of path/to/kaggle/data/folder -pf path/to/your/project/folder -b 64 -s 16 -sr 0.8```
-* The following arguments are mandatory: **-p** (preprocessing activation), **-of** (origin folder) and **-pf** (project folder)
-* The following arguments are optionnals: **-b** (batch number, default value 64), **-s** (subdivisions number, default value 16) and **-sr** (split rate wich is the percent of trainning and validation images. It must be between 0.7 and 0.95. The default value is 0.7)
+* ```python main.py --command train --origin_folder path/to/kaggle/data/folder --project_folder path/to/your/project/folder --batch 64 --subdivisions 16 --split_rate 0.8```
+* The following arguments are mandatory: **--command** (preprocessing activation), **--origin_folder** (origin folder) and **--project_folder** (project folder)
+* The following arguments are optionnals: **--batch** (batch number, default value 64), **--subdivisions** (subdivisions number, default value 16) and **--split_rate** (split rate wich is the percent of trainning and validation images. It must be between 0.7 and 0.95. The default value is 0.7)
 
 To lauch the detection execution:
-* ```python main.py -d True -of path/to/kaggle/data/folder -pf path/to/your/project/folder -w path/to/the/weight/file -c 0.7 -t 0.025 -dis 640```
-* The following arguments are mandatory: **-d** (detection activation), **-of** (origin folder), **-pf** (project folder) and **-w** (weights file)
-* The following arguments are optionnals: **-c** (confidense, default value 0.7), **-t** (threshold, default value 0.025) and **-dis** (Size of images during detection. It must be a multiple of 32. The default value is 640)
+* ```python main.py --command detection --origin_folder path/to/kaggle/data/folder --project_folder path/to/your/project/folder --weights_path path/to/the/weight/file --confidence 0.7 --threshold 0.025 --detect_im_size 640```
+* The following arguments are mandatory: **--command detection** (detection activation), **--origin_folder** (origin folder), **--project_folder** (project folder) and **--weights_path** (weights file)
+* The following arguments are optionnals: **--confidence** (confidense, default value 0.7), **--threshold** (threshold, default value 0.025) and **--detect_im_size** (Size of images during detection. It must be a multiple of 32. The default value is 640)
+
+
+## Citation
+
+```
+@article{yolov3,
+  title={YOLOv3: An Incremental Improvement},
+  author={Redmon, Joseph and Farhadi, Ali},
+  journal = {arXiv},
+  year={2018}
+}
+```
 
