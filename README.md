@@ -23,7 +23,7 @@ Check options available before enter ```make``` command as GPU and so on.
 
 I used data made available by "Radiological Society of North America" on Kaggle. The challenge name is ["RSNA Pneumonia Detection Challenge"](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge).
 
-The second version of data is organised as :
+The second version of data is organised as:
 * A train folder with about 26 684 images,
 * A test folder with about 3 000 images,
 * A csv file named "stage_2_train_labels.csv" with the bounding boxes of all train images,
@@ -102,7 +102,12 @@ To lauch the preprocessing execution:
 To lauch the detection execution:
 * ```python main.py --command detection --origin_folder path/to/kaggle/data/folder --project_folder path/to/your/project/folder --weights_path path/to/the/weight/file --confidence 0.7 --threshold 0.025 --detect_im_size 640```
 * The following arguments are mandatory: **--command detection** (detection activation), **--origin_folder** (origin folder), **--project_folder** (project folder) and **--weights_path** (weights file)
-* The following arguments are optionnals: **--confidence** (confidense, default value 0.7), **--threshold** (threshold, default value 0.025) and **--detect_im_size** (Size of images during detection. It must be a multiple of 32. The default value is 640)
+* The following arguments are optionnals: **--confidence** (confidence, default value 0.7), **--threshold** (threshold, default value 0.025) and **--detect_im_size** (Size of images during detection. It must be a multiple of 32. The default value is 640)
+
+
+## Exemple
+
+![Image1](https://github.com/j-bd/yolo_v3/blob/master/detect.png)	![Image2](https://github.com/j-bd/yolo_v3/blob/master/detect_.png)
 
 
 ## Citation
