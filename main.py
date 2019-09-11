@@ -4,7 +4,6 @@
 Created on Tue Jul 23 22:33:29 2019
 
 @author: j-bd
-
 """
 import os
 import logging
@@ -27,7 +26,7 @@ def pre_trainning(args):
     train_data_dir = os.path.join(project_dir, "data")
     train_images_dir = os.path.join(project_dir, "data/obj")
     backup = os.path.join(project_dir, "backup_log")
-    file_train = os.path.join(image_dir,"stage_2_train_labels.csv")
+    file_train = os.path.join(image_dir, "stage_2_train_labels.csv")
     yolo_label = os.path.join(project_dir, "darknet/data/labels")
     test_images_dir = os.path.join(project_dir, "detect_results/obj")
 
@@ -86,13 +85,13 @@ def detection(args):
         constants.OBJ_DETEC, args.detect_im_size
     )
     images_to_detect = list()
-    for image_name in test_dataset.iloc[:, 0].unique():
+    for image_name in test_dataset.iloc[10: 40, 0].unique():
         images_to_detect.append(os.path.join(test_images_dir, image_name + ".jpg"))
 
-    final_result = list()
-    final_result.append("patientId,PredictionString")
-
-    return cfg_file, images_to_detect, final_result, os.path.join(test_data_dir, "submission.csv")
+    pneumonia_detection.image_detection(
+        cfg_file, images_to_detect, os.path.join(test_data_dir, "submission.csv"),
+        args
+    )
 
 
 def main():
@@ -103,17 +102,7 @@ def main():
     if args.command == "train":
         pre_trainning(args)
     else:
-        cfg_path, images, result, output_path = detection(args)
-        for image in images:
-            print("[INFO] ", images.index(image)+ 1, "/", len(images))
-            box = pneumonia_detection.detect(
-                image, args.weights_path, cfg_path, args.confidence,
-                args.threshold
-            )
-            result.append(box)
-        pneumonia_detection.submission_file(output_path, result)
-
-        print("[INFO] All images have been proceed")
+        detection(args)
 
 
 if __name__ == "__main__":

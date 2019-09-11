@@ -51,7 +51,7 @@ def test_cfg_file(project_dir, test_data_dir, batch, subd, class_nbr, size):
     return output_cfg
 
 def detect(image_path, weights_path, config_path, confidence, threshold, show=False):
-    '''Detection of pneumonia on images'''
+    '''Detection of pneumonia on single image'''
     # Load YOLOv3 structure
     net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
     # Load image
@@ -117,8 +117,25 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
                 cv2.imshow("Image", image)
 
     logging.info(
-        f"[INFO] Processing time: {round(end - start, 2)}seconds "\
+        f"Processing time: {round(end - start, 2)}seconds "
         f"- {len(idxs)} object(s) detected"
     )
 
     return ''.join(final_boxes)
+
+
+def image_detection(cfg_path, images, output_path, args):
+    "Lauch detection for images"
+    result = list()
+    result.append("patientId,PredictionString")
+
+    for image in images:
+        logging.info(f"{images.index(image)+ 1} / {len(images)}")
+        box = detect(
+            image, args.weights_path, cfg_path, args.confidence,
+            args.threshold
+        )
+        result.append(box)
+    submission_file(output_path, result)
+
+    logging.info("All images have been proceed")
