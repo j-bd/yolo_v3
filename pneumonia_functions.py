@@ -222,7 +222,7 @@ def data_selection(dataset, split_rate):
     ys = df.iloc[:, -1]
 
     x_train, x_val, y_train, y_val = train_test_split(
-        xs, ys, test_size=0.2, random_state=42, stratify=ys
+        xs, ys, test_size=1 - split_rate, random_state=42, stratify=ys
     )
 
     return x_train, x_val
@@ -251,11 +251,15 @@ def visualisation(image_dir_path, dataset, index_patient):
         patient_box = dataset[dataset.iloc[:, 0] == dataset.iloc[index_patient, 0]]
         for x, y, w, h in patient_box.iloc[:, 1:5].values:
             plt.plot([x, x, x+w, x+w, x], [y, y+h, y+h, y, y], label="pneumonia")
-        plt.imshow(cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg')))
+        plt.imshow(
+            cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg'))
+        )
         plt.title("Pneumonia")
         plt.legend()
     else:
-        plt.imshow(cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg')))
+        plt.imshow(
+            cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg'))
+        )
         plt.title("No pneumonia")
 
 

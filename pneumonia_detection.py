@@ -56,7 +56,7 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
     net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
     # Load image
     image = cv2.imread(image_path)
-    H, W = image.shape[:2]
+    h, w = image.shape[:2]
     # Output layer names from YOLOv3
     ln = net.getLayerNames()
     ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
@@ -67,7 +67,7 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
     net.setInput(blob)
 
     start = time.time()
-    layerOutputs = net.forward(ln)
+    layer_outputs = net.forward(ln)
     end = time.time()
 
     # Initialize our lists of detected bounding boxes, confidences
@@ -75,18 +75,18 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
     confidences = list()
     final_boxes = list()
     final_boxes.append(image_path.split(sep="/")[-1].split(sep=".")[0] + ",")
-    for output in layerOutputs:
+    for output in layer_outputs:
         for detection in output:
             # If pneumonia have been detect, returns the center (x, y)-coordinates
             # of the box, followed by the width, the height and finally the confidence
             if detection[5] > confidence:
                 # Transform coordinates from relative size to image size
-                box = detection[0:4] * np.array([W, H, W, H])
-                (centerX, centerY, width, height) = box.astype("int")
+                box = detection[0:4] * np.array([w, h, w, h])
+                (center_x, center_y, width, height) = box.astype("int")
                 # Use the center (x, y)-coordinates to derive the top
                 # and left corner of the bounding box
-                x = int(centerX - (width / 2))
-                y = int(centerY - (height / 2))
+                x = int(center_x - (width / 2))
+                y = int(center_y - (height / 2))
                 # Update our list of bounding box coordinates, confidences,
                 # and class IDs
                 boxes.append([x, y, int(width), int(height)])
