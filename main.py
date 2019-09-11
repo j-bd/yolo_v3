@@ -32,29 +32,25 @@ def pre_trainning(args):
     test_images_dir = os.path.join(project_dir, "detect_results/obj")
 
     pneumonia_functions.structure(
-        train_data_dir, train_images_dir, test_images_dir, backup, yolo_label,
+        [train_images_dir, test_images_dir, backup], train_data_dir, yolo_label,
         project_dir
     )
 
     pneumonia_functions.yolo_parameters(
         project_dir, train_data_dir, backup, args.batch, args.subdivisions,
-        constants.OBJ_NBR, ["pneumonia"]
+        constants.OBJ_NBR, constants.OBJ_NAME
     )
 
-    original_dataset = pd.read_csv(file_train)
-
-    train_df, val_df, pneumonia_df, non_pneumonia_df = pneumonia_functions.data_preprocessing(
-        original_dataset, args.split_rate
-    )
+    df = pd.read_csv(file_train)
 
     pneumonia_functions.yolo_jpg_file(
-        original_dataset, input_train_data_dir, train_images_dir
+        df, input_train_data_dir, train_images_dir
     )
-
     pneumonia_functions.yolo_label_generation(
-        original_dataset, train_images_dir, constants.IMAGE_SIZE
+        df, train_images_dir, constants.IMAGE_SIZE
     )
 
+    train_df, val_df = pneumonia_functions.data_selection(df, args.split_rate)
     pneumonia_functions.yolo_image_path_file(
         train_df, train_data_dir, train_images_dir, "train.txt"
     )

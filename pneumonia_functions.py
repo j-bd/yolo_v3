@@ -10,6 +10,7 @@ from distutils.dir_util import copy_tree
 import argparse
 import logging
 
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -196,39 +197,35 @@ def yolo_pre_trained_weights(link, path):
     '''Download the pre-trained weights darknet53.conv.74 (162.5MB)'''
     url = link
     logging.info(
-        "Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB)."\
-        "Please wait"
+        '''Pre-trained weights 'darknet53.conv.74' downloading in progress (162.5MB).
+        Please wait'''
     )
     wget.download(url, out=path)
 
 
-def data_preprocessing(dataset, split_rate):
-    '''Produce different datasets'''
+def data_selection(dataset, split_rate):
+    '''Produce different datasets. As required by the authors of Yolov3, we need
+    to have DataFrames of same size
+    '''
     # Dataframe with only images of pneumonia
     positive = dataset[dataset.iloc[:, -1] == 1]
-    positive = positive.reset_index(drop=True)
     pos_size = len(positive)
 
-    # Dataframe with only images of non pneumonia. As required by the authors of Yolov3 we need to
-    # have DataFrames of same size
+    # Dataframe with only images of non pneumonia
     negative = dataset[dataset.iloc[:, -1] == 0]
-    neg_size = min(len(positive.iloc[:, 0].unique()), len(negative))
+    neg_size = min(pos_size, len(negative))
     negative = negative.iloc[: neg_size, :]
-    negative = negative.reset_index(drop=True)
 
-    # Train and validation dataframe
-    pos_split = int(pos_size * split_rate)
-    neg_split = int(neg_size * split_rate)
-    train = pd.concat(
-        [positive.iloc[: pos_split, :], negative.iloc[: neg_split, :]], axis=0
-    )
-    train = train.reset_index(drop=True)
-    val = pd.concat(
-        [positive.iloc[pos_split:, :], negative.iloc[neg_split:, :]], axis=0
-    )
-    val = val.reset_index(drop=True)
+    df = pd.concat([positive, negative], axis=0)
+    df = df.reset_index(drop=True)
+    xs = df.iloc[:, :-1]
+    ys = df.iloc[:, -1]
 
-    return train, val, positive, negative
+    x_train, x_val, y_train, y_val = train_test_split(
+        xs, ys, test_size=0.2, random_state=42, stratify=ys
+    )
+
+    return x_train, x_val
 
 
 def yolo_parameters(project_dir, train_data_dir, backup, batch, subdivisions, obj, list_obj):
@@ -238,11 +235,10 @@ def yolo_parameters(project_dir, train_data_dir, backup, batch, subdivisions, ob
     yolo_data_file(train_data_dir, backup, obj)
 
 
-def structure(train_data_dir, train_images_dir, test_images_dir, backup, yolo_label, proj_dir):
+def structure(folder_list, train_data_dir, yolo_label, proj_dir):
     '''Create the structure for the project and downoald necessary file'''
-    os.makedirs(train_images_dir, exist_ok=True)
-    os.makedirs(test_images_dir, exist_ok=True)
-    os.makedirs(backup, exist_ok=True)
+    for name in folder_list:
+        os.makedirs(name, exist_ok=True)
 
     copy_tree(yolo_label, os.path.join(train_data_dir, "labels"))
 

@@ -9,6 +9,8 @@ Created on Wed Sep  4 15:26:57 2019
 IMAGE_SIZE = 1024
 # Number of objects to be trained
 OBJ_NBR = 1
+# Names of objects to be trained
+OBJ_NAME = ["pneumonia"]
 # Weights downloadind address
 W_PATH = "https://pjreddie.com/media/files/darknet53.conv.74"
 
