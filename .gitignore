@@ -1,9 +1,9 @@
-data/obj/
-data/labels/
+data/obj
+data/labels
 darknet53.conv.74
 backup_log
 detect_results
 draft
 __pycache__
 train_log.txt
-darknet/
+darknet
