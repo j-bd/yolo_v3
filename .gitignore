@@ -6,4 +6,5 @@ detect_results
 draft
 __pycache__
 train_log.txt
-darknet
+
+darknet_

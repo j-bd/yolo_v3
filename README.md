@@ -38,7 +38,7 @@ Before launching this algorithm make sure the Kaggle data are organized as follo
 * A detailed CSV file train labels named 'stage_2_train_labels.csv',
 * A detailed CSV file for submission named 'stage_2_sample_submission.csv'.
 
-All this elements must be gather in the same directory. The path will be mentionned when launching the algorithm.
+All these elements must be gathered in the same directory. The path will be mentionned when launching the algorithm.
 [Source](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data)
 
 
@@ -54,15 +54,7 @@ To train yolo_v3 algorithm to detect our custom objects we need to follow this s
 * Create a '.txt' file with the path to all validation images,
 * Download the right [pre-trained weights file](https://github.com/AlexeyAB/darknet).
 
-To save model files more regularly during the training, we need to modify the code of this following file ```darknet/examples/detector.c``` (around the line 138) :
-```
-    if(i%10000==0 || (i < 1000 && i%100 == 0)){
-```
-to:
-```
-    if(i%1000==0 || (i < 2000 && i%50 == 0)){
-```
-We now save in the backup folder every 50 iterations a '.weights' file till we reach 2000 and then we save after every 1000 iterations
+To save model files more regularly during the training, we modified the code of this following file `darknet/examples/detector.c`. Thus, be sur to download the submodule ```darknet``` which is a fork plus a modification of the original repository.
 
 
 ## Global organization of the repository
