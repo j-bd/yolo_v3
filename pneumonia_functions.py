@@ -26,7 +26,38 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 def create_parser():
     '''Get the informations from the operator'''
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog='YOLOv3 new object training', usage='%(prog)s [Initially for RSNA pneumonia Kaggle challenge]',
+        formatter_class=argparse.RawDescriptionHelpFormatter, description='''
+        To lauch the preprocessing execution:
+        -------------------------------------
+        python main.py --command train --origin_folder path/to/kaggle/data/folder
+        --project_folder path/to/your/project/folder --batch 64 --subdivisions 16
+        --split_rate 0.8
+
+        The following arguments are mandatory: --command (preprocessing activation),
+        --origin_folder (origin folder path) and --project_folder (project folder path)
+
+        The following arguments are optionnals: --batch (batch number, default value 64),
+        --subdivisions (subdivisions number, default value 16) and --split_rate
+        (split rate wich is the percent of trainning and validation images. It must
+        be between 0.7 and 0.95. The default value is 0.7)
+
+        To lauch the detection execution:
+        ---------------------------------
+        python main.py --command detection --origin_folder path/to/kaggle/data/folder
+        --project_folder path/to/your/project/folder --weights_path path/to/the/weight/file
+        --confidence 0.7 --threshold 0.025 --detect_im_size 640
+
+        The following arguments are mandatory: --command detection (detection activation),
+        --origin_folder (origin folder path), --project_folder (project folder path) and
+        --weights_path (weights file path)
+
+        The following arguments are optionnals: --confidence (confidence, default value 0.7),
+        --threshold (threshold, default value 0.025) and --detect_im_size
+        (Size of images during detection. It must be a multiple of 32. The default
+         value is 640)'''
+    )
     parser.add_argument(
         "-cmd", "--command", required=True,
         help="choice between 'train' and 'detection'"
