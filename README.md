@@ -81,7 +81,7 @@ The file `pneumonia_detection.py` is dedicated to the detection on the test imag
 
 I offer the possibility to execute automatically all the algorithm through `main.py`.
 
-s
+
 ## Exemple
 
 ![Image1](https://github.com/j-bd/yolo_v3/blob/master/detect.png)	![Image2](https://github.com/j-bd/yolo_v3/blob/master/detect_.png)
