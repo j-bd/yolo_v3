@@ -174,7 +174,7 @@ def yolo_data_file(train_data_dir, backup, class_nbr):
         f"train = {train_data_dir + 'train.txt'}\n"\
         f"valid = {train_data_dir + 'val.txt'}\n"\
         f"names = {train_data_dir + 'obj.names'}\n"\
-        f"backup = {backup}"
+        f"backup = {backup}\n"
         data.write(line)
 
 
