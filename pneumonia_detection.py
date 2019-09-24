@@ -99,12 +99,8 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
         # Loop over the indexes we are keeping
         for i in idxs.flatten():
             # Extract the bounding box coordinates
-            (x, y) = (boxes[i][0], boxes[i][1])
-            (w, h) = (boxes[i][2], boxes[i][3])
-            final_boxes.append(
-                str(round(confidences[i], 2)) + " " + str(x) + " " + str(y)
-                + " " + str(w) + " " + str(h) + " "
-            )
+            x, y, w, h = boxes[i]
+            final_boxes.append(f"{round(confidences[i], 2)} {x} {y} {w} {h}")
             if show:
                 # Draw a bounding box rectangle and label on the image
                 color = (0, 0, 255)
@@ -121,7 +117,7 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
         f"- {len(idxs)} object(s) detected"
     )
 
-    return ''.join(final_boxes)
+    return ' '.join(final_boxes)
 
 
 def image_detection(cfg_path, images, output_path, args):
@@ -130,12 +126,12 @@ def image_detection(cfg_path, images, output_path, args):
     result.append("patientId,PredictionString")
 
     for image in images:
-        logging.info(f"{images.index(image)+ 1} / {len(images)}")
-        box = detect(
+        logging.info(f"{images.index(image) + 1} / {len(images)}")
+        box_coordinate = detect(
             image, args.weights_path, cfg_path, args.confidence,
             args.threshold
         )
-        result.append(box)
+        result.append(box_coordinate)
     submission_file(output_path, result)
 
     logging.info("All images have been proceed")
