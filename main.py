@@ -6,7 +6,6 @@ Created on Tue Jul 23 22:33:29 2019
 @author: j-bd
 """
 import os
-import logging
 
 import pandas as pd
 
@@ -15,11 +14,9 @@ import pneumonia_detection
 import constants
 
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-
-def pre_trainning(args):
-    '''Lauch all necessary steps to set up Yolo v3 algorithm before for objects
-    trainning'''
+def training(args):
+    '''Lauch all necessary steps to set up Yolo v3 algorithm before objects
+    trainning and lauch the training command'''
     image_dir = args.origin_folder
     input_train_data_dir = os.path.join(image_dir, "stage_2_train_images")
     project_dir = args.project_folder
@@ -57,12 +54,8 @@ def pre_trainning(args):
         val_df, train_data_dir, train_images_dir, "val.txt"
     )
 
-    logging.info(
-        '''To lauch the training, please enter the following command
-        in your terminal :\n
-        ./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74\
-        -i 0 | tee train_log.txt\n
-        Be sure to be in your Master Directory: {}'''.format(project_dir)
+    os.system(
+        "./darknet/darknet detector train data/obj.data data/yolo-obj.cfg darknet53.conv.74 -i 0 | tee train_log.txt"
     )
 
 
@@ -100,7 +93,7 @@ def main():
     pneumonia_functions.check_inputs(args)
 
     if args.command == "train":
-        pre_trainning(args)
+        training(args)
     else:
         detection(args)
 
