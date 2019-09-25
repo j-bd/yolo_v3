@@ -24,7 +24,7 @@ import constants
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 
-def create_parser():
+def arguments_parser():
     '''Get the informations from the operator'''
     parser = argparse.ArgumentParser(
         prog='YOLOv3 new object training', usage='%(prog)s [Initially for RSNA pneumonia Kaggle challenge]',
@@ -184,24 +184,24 @@ def dcm_to_array(image_path):
     return np.stack([dcm_im]*3, -1)
 
 
-def yolo_jpg_file(dataset, origin_folder, target_folder):
+def yolo_jpg_file(df, origin_folder, target_folder):
     '''Copy the choosen images in the right directory under jpg format'''
-    for image_name in dataset.iloc[:, 0].unique():
+    for image_name in df.iloc[:, 0].unique():
         image = dcm_to_array(os.path.join(origin_folder, image_name))
         cv2.imwrite(os.path.join(target_folder, image_name + ".jpg"), image)
 
 
-def yolo_label_generation(dataset, target_folder, image_size):
+def yolo_label_generation(df, target_folder, image_size):
     '''Generate label in the shape of yolo_v3 learning CNN:
     <object-class> <x_center> <y_center> <width> <height>
     relative value is required by yolo_v3 algorithm.
     one txt file per image is also required by yolo_v3 algorithm
     As mentionned in darknet repo, to improve results we need to add images without objects
     All created files will be saved in the same directory which contains jpg files'''
-    for name, groupe in dataset.groupby("patientId"):
+    for name, group in df.groupby("patientId"):
         label_file = os.path.join(target_folder, name + ".txt")
         with open(label_file, "w+") as file:
-            for x, y, w, h, cl in groupe.iloc[:, 1:].values:
+            for x, y, w, h, cl in group.iloc[:, 1:].values:
                 if cl:
                     rel_w = w / image_size
                     rel_h = h / image_size
@@ -215,11 +215,11 @@ def yolo_label_generation(dataset, target_folder, image_size):
                     file.write(line)
 
 
-def yolo_image_path_file(dataset, target_folder, train_images_dir, file_name):
+def yolo_image_path_file(df, target_folder, train_images_dir, file_name):
     '''Generate a 'txt' file with the path and the name of each image'''
     txt_file = os.path.join(target_folder, file_name)
     with open(txt_file, "w+") as file:
-        for image_name in dataset.iloc[:, 0].unique():
+        for image_name in df.iloc[:, 0].unique():
             line = "{}\n".format(os.path.join(train_images_dir, image_name + ".jpg"))
             file.write(line)
 
@@ -234,16 +234,16 @@ def yolo_pre_trained_weights(link, path):
     wget.download(url, out=path)
 
 
-def data_selection(dataset, split_rate):
+def data_selection(df, split_rate):
     '''Produce different datasets. As required by the authors of Yolov3, we need
     to have DataFrames of same size
     '''
     # Dataframe with only images of pneumonia
-    positive = dataset[dataset.iloc[:, -1] == 1]
+    positive = df[df.iloc[:, -1] == 1]
     pos_size = len(positive)
 
     # Dataframe with only images of non pneumonia
-    negative = dataset[dataset.iloc[:, -1] == 0]
+    negative = df[df.iloc[:, -1] == 0]
     neg_size = min(pos_size, len(negative))
     negative = negative.iloc[: neg_size, :]
 
@@ -276,20 +276,20 @@ def structure(folder_list, train_data_dir, yolo_label, proj_dir):
     yolo_pre_trained_weights(constants.W_PATH, proj_dir)
 
 
-def visualisation(image_dir_path, dataset, index_patient):
+def visualisation(image_dir_path, df, index_patient):
     '''Display pneumonia or not image with or without the box'''
-    if dataset.iloc[index_patient, -1]:
-        patient_box = dataset[dataset.iloc[:, 0] == dataset.iloc[index_patient, 0]]
+    if df.iloc[index_patient, -1]:
+        patient_box = df[df.iloc[:, 0] == df.iloc[index_patient, 0]]
         for x, y, w, h in patient_box.iloc[:, 1:5].values:
             plt.plot([x, x, x+w, x+w, x], [y, y+h, y+h, y, y], label="pneumonia")
         plt.imshow(
-            cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg'))
+            cv2.imread(os.path.join(image_dir_path, df.iloc[index_patient, 0] + '.jpg'))
         )
         plt.title("Pneumonia")
         plt.legend()
     else:
         plt.imshow(
-            cv2.imread(os.path.join(image_dir_path, dataset.iloc[index_patient, 0] + '.jpg'))
+            cv2.imread(os.path.join(image_dir_path, df.iloc[index_patient, 0] + '.jpg'))
         )
         plt.title("No pneumonia")
 

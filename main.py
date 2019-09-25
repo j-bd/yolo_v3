@@ -78,7 +78,7 @@ def detection(args):
         constants.OBJ_DETEC, args.detect_im_size
     )
     images_to_detect = list()
-    for image_name in test_dataset.iloc[:, 0].unique():
+    for image_name in test_dataset.iloc[:20, 0].unique():
         images_to_detect.append(os.path.join(test_images_dir, image_name + ".jpg"))
 
     pneumonia_detection.image_detection(
@@ -89,7 +89,7 @@ def detection(args):
 
 def main():
     '''Allow the selection between algorithm training or image detection'''
-    args = pneumonia_functions.create_parser()
+    args = pneumonia_functions.arguments_parser()
     pneumonia_functions.check_inputs(args)
 
     if args.command == "train":
