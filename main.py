@@ -27,12 +27,12 @@ def training(args):
     yolo_label = os.path.join(project_dir, "darknet/data/labels")
     test_images_dir = os.path.join(project_dir, "detect_results/obj")
 
-    pneumonia_functions.structure(
+    pneumonia_functions.algorithm_structure_creation(
         [train_images_dir, test_images_dir, backup], train_data_dir, yolo_label,
         project_dir
     )
 
-    pneumonia_functions.yolo_parameters(
+    pneumonia_functions.yolo_params_files_creation(
         project_dir, train_data_dir, backup, args.batch, args.subdivisions,
         constants.OBJ_NBR, constants.OBJ_NAME
     )

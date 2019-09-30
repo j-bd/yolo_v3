@@ -132,7 +132,7 @@ def check_inputs(args):
             raise ValueError("Detection image size must be a multiple of 32")
 
 
-def yolo_cfg_file(project_dir, train_data_dir, batch, subd, class_nbr):
+def cfg_file_creator(project_dir, train_data_dir, batch, subd, class_nbr):
     '''Generate the config file for yolo v3 training
     We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
     regarding the context and save it under 'yolo-obj.cfg' in data directory'''
@@ -155,7 +155,7 @@ def yolo_cfg_file(project_dir, train_data_dir, batch, subd, class_nbr):
         cfg_out.write(new_cfg)
 
 
-def yolo_names_file(train_data_dir, list_names):
+def names_file_creator(train_data_dir, list_names):
     '''Generate the file gathering all object class names for yolo v3 training
     We except a list of string and save it under 'obj.names' in data directory'''
     names_file = os.path.join(train_data_dir, "obj.names")
@@ -165,7 +165,7 @@ def yolo_names_file(train_data_dir, list_names):
             names.write(line)
 
 
-def yolo_data_file(train_data_dir, backup, class_nbr):
+def data_file_creator(train_data_dir, backup, class_nbr):
     '''Generate the file with paths for yolo v3 training
     The file will be save under 'obj.data' in data directory'''
     data_file = os.path.join(train_data_dir, "obj.data")
@@ -224,7 +224,7 @@ def yolo_image_path_file(df, target_folder, train_images_dir, file_name):
             file.write(line)
 
 
-def yolo_pre_trained_weights(link, path):
+def pre_trained_weights_download(link, path):
     '''Download the pre-trained weights darknet53.conv.74 (162.5MB)'''
     url = link
     logging.info(
@@ -259,21 +259,21 @@ def data_selection(df, split_rate):
     return x_train, x_val
 
 
-def yolo_parameters(project_dir, train_data_dir, backup, batch, subdivisions, obj, list_obj):
+def yolo_params_files_creation(project_dir, train_data_dir, backup, batch, subdivisions, obj, list_obj):
     '''Create all files wich will be used by Yolo v3 algorithm during the learning process'''
-    yolo_cfg_file(project_dir, train_data_dir, batch, subdivisions, obj)
-    yolo_names_file(train_data_dir, list_obj)
-    yolo_data_file(train_data_dir, backup, obj)
+    cfg_file_creator(project_dir, train_data_dir, batch, subdivisions, obj)
+    names_file_creator(train_data_dir, list_obj)
+    data_file_creator(train_data_dir, backup, obj)
 
 
-def structure(folder_list, train_data_dir, yolo_label, proj_dir):
+def algorithm_structure_creation(folder_list, train_data_dir, yolo_label, proj_dir):
     '''Create the structure for the project and downoald necessary file'''
     for name in folder_list:
         os.makedirs(name, exist_ok=True)
 
     copy_tree(yolo_label, os.path.join(train_data_dir, "labels"))
 
-    yolo_pre_trained_weights(constants.W_PATH, proj_dir)
+    pre_trained_weights_download(constants.W_PATH, proj_dir)
 
 
 def visualisation(image_dir_path, df, index_patient):
