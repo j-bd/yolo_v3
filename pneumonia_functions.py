@@ -281,7 +281,7 @@ def visualisation(image_dir_path, df, index_patient):
     if df.iloc[index_patient, -1]:
         patient_box = df[df.iloc[:, 0] == df.iloc[index_patient, 0]]
         for x, y, w, h in patient_box.iloc[:, 1:5].values:
-            plt.plot([x, x, x+w, x+w, x], [y, y+h, y+h, y, y], label="pneumonia")
+            plt.plot([x, x, x + w, x + w, x], [y, y + h, y + h, y, y], label="pneumonia")
         plt.imshow(
             cv2.imread(os.path.join(image_dir_path, df.iloc[index_patient, 0] + '.jpg'))
         )
