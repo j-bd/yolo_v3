@@ -12,7 +12,6 @@ import logging
 
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pydicom
 import cv2
@@ -118,7 +117,7 @@ def check_inputs(args):
         )
     if not os.path.isdir(os.path.join(args.project_folder, "darknet")):
         raise FileNotFoundError(
-            f"Please, clone darknet repository in '{args.project_folder}'."
+            f"Please, clone darknet repository in {args.project_folder}."
         )
     if args.command == "train":
         if not 0.7 <= args.split_rate <= 0.95:
@@ -132,7 +131,7 @@ def check_inputs(args):
             raise ValueError("Detection image size must be a multiple of 32")
 
 
-def cfg_file_creator(project_dir, train_data_dir, batch, subd, class_nbr):
+def cfg_file_creator(project_dir, train_data_dir, batch, subd, channel_nbr, class_nbr):
     '''Generate the config file for yolo v3 training
     We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
     regarding the context and save it under 'yolo-obj.cfg' in data directory'''
@@ -145,6 +144,7 @@ def cfg_file_creator(project_dir, train_data_dir, batch, subd, class_nbr):
     filter_yolo = str((class_nbr + 5) * 3)
     new_cfg = new_cfg.replace('batch=64', 'batch=' + str(batch))
     new_cfg = new_cfg.replace('subdivisions=16', 'subdivisions=' + str(subd))
+    new_cfg = new_cfg.replace('channels=3', 'channels=' + str(channel_nbr))
     new_cfg = new_cfg.replace('max_batches = 500200', 'max_batches =' + str(max_batches))
     new_cfg = new_cfg.replace('steps=400000,450000', 'steps=' + steps)
     new_cfg = new_cfg.replace('classes=80', 'classes=' + str(class_nbr))
@@ -181,7 +181,7 @@ def data_file_creator(train_data_dir, backup, class_nbr):
 def dcm_to_array(image_path):
     '''Tranform dicom image format to a numpy array'''
     dcm_im = pydicom.read_file(image_path + ".dcm").pixel_array
-    return np.stack([dcm_im]*3, -1)
+    return dcm_im
 
 
 def yolo_jpg_file(df, origin_folder, target_folder):
@@ -259,9 +259,9 @@ def data_selection(df, split_rate):
     return x_train, x_val
 
 
-def yolo_params_files_creation(project_dir, train_data_dir, backup, batch, subdivisions, obj, list_obj):
+def yolo_params_files_creation(project_dir, train_data_dir, backup, batch, subdivisions, channel, obj, list_obj):
     '''Create all files wich will be used by Yolo v3 algorithm during the learning process'''
-    cfg_file_creator(project_dir, train_data_dir, batch, subdivisions, obj)
+    cfg_file_creator(project_dir, train_data_dir, batch, subdivisions, channel, obj)
     names_file_creator(train_data_dir, list_obj)
     data_file_creator(train_data_dir, backup, obj)
 

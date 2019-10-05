@@ -34,7 +34,7 @@ def training(args):
 
     pneumonia_functions.yolo_params_files_creation(
         project_dir, train_data_dir, backup, args.batch, args.subdivisions,
-        constants.OBJ_NBR, constants.OBJ_NAME
+        constants.CHANNEL_NBR, constants.OBJ_NBR, constants.OBJ_NAME
     )
 
     df = pd.read_csv(file_train)

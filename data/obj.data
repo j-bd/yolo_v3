@@ -1,5 +1,5 @@
 classes = 1
-train = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/data/train.txt
-valid = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/data/val.txt
-names = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/data/obj.names
-backup = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/backup_log/
+train = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/datatrain.txt
+valid = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/dataval.txt
+names = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/dataobj.names
+backup = /home/latitude/Documents/Kaggle/rsna-pneumonia/yolo_v3/backup_log

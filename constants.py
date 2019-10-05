@@ -7,6 +7,8 @@ Created on Wed Sep  4 15:26:57 2019
 """
 # Input images size
 IMAGE_SIZE = 1024
+# Number of channels of images used
+CHANNEL_NBR = 1
 # Number of objects to be trained
 OBJ_NBR = 1
 # Names of objects to be trained
