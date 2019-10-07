@@ -14,44 +14,38 @@ import pneumonia_detection
 import constants
 
 
-def training(args):
+def training(dict_args):
     '''Lauch all necessary steps to set up Yolo v3 algorithm before objects
     trainning and lauch the training command'''
-    image_dir = args.origin_folder
-    input_train_data_dir = os.path.join(image_dir, "stage_2_train_images")
-    project_dir = args.project_folder
-    train_data_dir = os.path.join(project_dir, "data")
-    train_images_dir = os.path.join(project_dir, "data/obj")
-    backup = os.path.join(project_dir, "backup_log")
-    file_train = os.path.join(image_dir, "stage_2_train_labels.csv")
-    yolo_label = os.path.join(project_dir, "darknet/data/labels")
-    test_images_dir = os.path.join(project_dir, "detect_results/obj")
+#    image_dir = args.origin_folder
+#    input_train_data_dir = os.path.join(image_dir, "stage_2_train_images")
+#    project_dir = args.project_folder
+#    train_data_dir = os.path.join(project_dir, "data")
+#    train_images_dir = os.path.join(project_dir, "data/obj")
+#    backup = os.path.join(project_dir, "backup_log")
+#    file_train = os.path.join(image_dir, "stage_2_train_labels.csv")
+#    yolo_label = os.path.join(project_dir, "darknet/data/labels")
+#    test_images_dir = os.path.join(project_dir, "detect_results/obj")
 
-    pneumonia_functions.algorithm_structure_creation(
-        [train_images_dir, test_images_dir, backup], train_data_dir, yolo_label,
-        project_dir
-    )
+    pneumonia_functions.algorithm_structure_creation(dict_args)
 
     pneumonia_functions.yolo_params_files_creation(
-        project_dir, train_data_dir, backup, args.batch, args.subdivisions,
-        constants.CHANNEL_NBR, constants.OBJ_NBR, constants.OBJ_NAME
+        dict_args, constants.CHANNEL_NBR, constants.OBJ_NBR, constants.OBJ_NAME
     )
 
-    df = pd.read_csv(file_train)
+    df = pd.read_csv(dict_args["file_train"])
 
-    pneumonia_functions.yolo_jpg_file(
-        df, input_train_data_dir, train_images_dir
-    )
+    pneumonia_functions.yolo_jpg_file(df, dict_args)
     pneumonia_functions.yolo_label_generation(
-        df, train_images_dir, constants.IMAGE_SIZE
+        df, dict_args["train_images_dir"], constants.IMAGE_SIZE
     )
 
-    train_df, val_df = pneumonia_functions.data_selection(df, args.split_rate)
+    train_df, val_df = pneumonia_functions.data_selection(df, dict_args["split_rate"])
     pneumonia_functions.yolo_image_path_file(
-        train_df, train_data_dir, train_images_dir, "train.txt"
+        train_df, dict_args, "train.txt"
     )
     pneumonia_functions.yolo_image_path_file(
-        val_df, train_data_dir, train_images_dir, "val.txt"
+        val_df, dict_args, "val.txt"
     )
 
     os.system(
@@ -62,12 +56,12 @@ def training(args):
 def detection(args):
     '''Lauch all necessary steps to set up Yolo v3 algorithm before objects
     detection'''
-    image_dir = args.origin_folder
-    input_test_data_dir = os.path.join(args.origin_folder, "stage_2_test_images")
-    project_dir = args.project_folder
-    test_data_dir = os.path.join(project_dir, "detect_results")
-    test_images_dir = os.path.join(project_dir, "detect_results/obj")
-    file_test = os.path.join(image_dir, "stage_2_sample_submission.csv")
+#    image_dir = args.origin_folder
+#    input_test_data_dir = os.path.join(args.origin_folder, "stage_2_test_images")
+#    project_dir = args.project_folder
+#    test_data_dir = os.path.join(project_dir, "detect_results")
+#    test_images_dir = os.path.join(project_dir, "detect_results/obj")
+#    file_test = os.path.join(image_dir, "stage_2_sample_submission.csv")
 
     test_dataset = pd.read_csv(file_test)
     pneumonia_functions.yolo_jpg_file(
@@ -91,11 +85,12 @@ def main():
     '''Allow the selection between algorithm training or image detection'''
     args = pneumonia_functions.arguments_parser()
     pneumonia_functions.check_inputs(args)
+    dict_args = pneumonia_functions.path_creator(args)
 
     if args.command == "train":
-        training(args)
+        training(dict_args)
     else:
-        detection(args)
+        detection(dict_args)
 
 
 if __name__ == "__main__":

@@ -131,26 +131,71 @@ def check_inputs(args):
             raise ValueError("Detection image size must be a multiple of 32")
 
 
-def cfg_file_creator(project_dir, train_data_dir, batch, subd, channel_nbr, class_nbr):
+def path_creator(args):
+    '''Create all necessary paths for the algorithm'''
+    dict_args = vars(args)
+    if args.command == "train":
+        dict_args["image_dir"] = args.origin_folder
+        dict_args["input_train_data_dir"] = os.path.join(
+            dict_args["image_dir"], "stage_2_train_images"
+        )
+        dict_args["project_dir"] = args.project_folder
+        dict_args["train_data_dir"] = os.path.join(
+            dict_args["project_dir"], "data"
+        )
+        dict_args["train_images_dir"] = os.path.join(
+            dict_args["project_dir"], "data/obj"
+        )
+        dict_args["backup"] = os.path.join(
+            dict_args["project_dir"], "backup_log"
+        )
+        dict_args["file_train"] = os.path.join(
+            dict_args["image_dir"], "stage_2_train_labels.csv"
+        )
+        dict_args["yolo_label"] = os.path.join(
+            dict_args["project_dir"], "darknet/data/labels"
+        )
+        dict_args["test_images_dir"] = os.path.join(
+            dict_args["project_dir"], "detect_results/obj"
+        )
+    else:
+        dict_args["image_dir"] = args.origin_folder
+        dict_args["input_test_data_dir"] = os.path.join(
+            args.origin_folder, "stage_2_test_images"
+        )
+        dict_args["project_dir"] = args.project_folder
+        dict_args["test_data_dir"] = os.path.join(
+            dict_args["project_dir"], "detect_results"
+        )
+        dict_args["test_images_dir"] = os.path.join(
+            dict_args["project_dir"], "detect_results/obj"
+        )
+        dict_args["file_test"] = os.path.join(
+            dict_args["image_dir"], "stage_2_sample_submission.csv"
+        )
+    return dict_args
+
+
+def cfg_file_creator(dict_args, channel_nbr, class_nbr):
     '''Generate the config file for yolo v3 training
     We copy an existing file 'darknet/cfg/yolov3.cfg' then we customize it
     regarding the context and save it under 'yolo-obj.cfg' in data directory'''
-    input_cfg = os.path.join(project_dir, "darknet/cfg/yolov3.cfg")
+    input_cfg = os.path.join(dict_args["project_dir"], "darknet/cfg/yolov3.cfg")
     with open(input_cfg, 'r') as cfg_in:
         new_cfg = cfg_in.read()
 
     max_batches = 2000 * class_nbr
     steps = str(max_batches * 0.8) + ',' + str(max_batches * 0.9)
     filter_yolo = str((class_nbr + 5) * 3)
-    new_cfg = new_cfg.replace('batch=64', 'batch=' + str(batch))
-    new_cfg = new_cfg.replace('subdivisions=16', 'subdivisions=' + str(subd))
+    new_cfg = new_cfg.replace('batch=64', 'batch=' + str(dict_args["batch"]))
+    new_cfg = new_cfg.replace('subdivisions=16', 'subdivisions=' + str(dict_args["subd"]))
     new_cfg = new_cfg.replace('channels=3', 'channels=' + str(channel_nbr))
     new_cfg = new_cfg.replace('max_batches = 500200', 'max_batches =' + str(max_batches))
     new_cfg = new_cfg.replace('steps=400000,450000', 'steps=' + steps)
     new_cfg = new_cfg.replace('classes=80', 'classes=' + str(class_nbr))
     new_cfg = new_cfg.replace('filters=255', 'filters=' + filter_yolo)
 
-    output_cfg = os.path.join(train_data_dir, "yolo-obj.cfg")
+    output_cfg = os.path.join(dict_args["train_data_dir"], "yolo-obj.cfg")
     with open(output_cfg, 'w') as cfg_out:
         cfg_out.write(new_cfg)
 
@@ -165,16 +210,16 @@ def names_file_creator(train_data_dir, list_names):
             names.write(line)
 
 
-def data_file_creator(train_data_dir, backup, class_nbr):
+def data_file_creator(dict_args, class_nbr):
     '''Generate the file with paths for yolo v3 training
     The file will be save under 'obj.data' in data directory'''
-    data_file = os.path.join(train_data_dir, "obj.data")
+    data_file = os.path.join(dict_args["train_data_dir"], "obj.data")
     with open(data_file, 'w') as data:
         line = f"classes = {class_nbr}\n"\
-        f"train = {train_data_dir + 'train.txt'}\n"\
-        f"valid = {train_data_dir + 'val.txt'}\n"\
-        f"names = {train_data_dir + 'obj.names'}\n"\
-        f"backup = {backup}\n"
+        f"train = {dict_args['train_data_dir'] + 'train.txt'}\n"\
+        f"valid = {dict_args['train_data_dir'] + 'val.txt'}\n"\
+        f"names = {dict_args['train_data_dir'] + 'obj.names'}\n"\
+        f"backup = {dict_args['backup']}\n"
         data.write(line)
 
 
@@ -184,11 +229,13 @@ def dcm_to_array(image_path):
     return dcm_im
 
 
-def yolo_jpg_file(df, origin_folder, target_folder):
+def yolo_jpg_file(df, dict_args):
     '''Copy the choosen images in the right directory under jpg format'''
     for image_name in df.iloc[:, 0].unique():
-        image = dcm_to_array(os.path.join(origin_folder, image_name))
-        cv2.imwrite(os.path.join(target_folder, image_name + ".jpg"), image)
+        image = dcm_to_array(os.path.join(dict_args["origin_folder"], image_name))
+        cv2.imwrite(
+            os.path.join(dict_args["target_folder"], image_name + ".jpg"), image
+        )
 
 
 def yolo_label_generation(df, target_folder, image_size):
@@ -215,12 +262,12 @@ def yolo_label_generation(df, target_folder, image_size):
                     file.write(line)
 
 
-def yolo_image_path_file(df, target_folder, train_images_dir, file_name):
+def yolo_image_path_file(df, dict_args, file_name):
     '''Generate a 'txt' file with the path and the name of each image'''
-    txt_file = os.path.join(target_folder, file_name)
+    txt_file = os.path.join(dict_args["target_folder"], file_name)
     with open(txt_file, "w+") as file:
         for image_name in df.iloc[:, 0].unique():
-            line = "{}\n".format(os.path.join(train_images_dir, image_name + ".jpg"))
+            line = "{}\n".format(os.path.join(dict_args["train_images_dir"], image_name + ".jpg"))
             file.write(line)
 
 
@@ -259,21 +306,26 @@ def data_selection(df, split_rate):
     return x_train, x_val
 
 
-def yolo_params_files_creation(project_dir, train_data_dir, backup, batch, subdivisions, channel, obj, list_obj):
+def yolo_params_files_creation(dict_args, channel, obj, list_obj):
     '''Create all files wich will be used by Yolo v3 algorithm during the learning process'''
-    cfg_file_creator(project_dir, train_data_dir, batch, subdivisions, channel, obj)
-    names_file_creator(train_data_dir, list_obj)
-    data_file_creator(train_data_dir, backup, obj)
+    cfg_file_creator(dict_args, channel, obj)
+    names_file_creator(dict_args["train_data_dir"], list_obj)
+    data_file_creator(dict_args, obj)
 
 
-def algorithm_structure_creation(folder_list, train_data_dir, yolo_label, proj_dir):
+def algorithm_structure_creation(dict_args):
     '''Create the structure for the project and downoald necessary file'''
+    folder_list = [
+        dict_args["train_images_dir"], dict_args["test_images_dir"], dict_args["backup"]
+    ]
     for name in folder_list:
         os.makedirs(name, exist_ok=True)
 
-    copy_tree(yolo_label, os.path.join(train_data_dir, "labels"))
+    copy_tree(
+        dict_args["yolo_label"], os.path.join(dict_args["train_data_dir"], "labels")
+    )
 
-    pre_trained_weights_download(constants.W_PATH, proj_dir)
+    pre_trained_weights_download(constants.W_PATH, dict_args["proj_dir"])
 
 
 def visualisation(image_dir_path, df, index_patient):
