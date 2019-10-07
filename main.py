@@ -35,7 +35,7 @@ def training(dict_args):
 
     df = pd.read_csv(dict_args["file_train"])
 
-    pneumonia_functions.yolo_jpg_file(df, dict_args)
+#    pneumonia_functions.yolo_jpg_file(df, dict_args)
     pneumonia_functions.yolo_label_generation(
         df, dict_args["train_images_dir"], constants.IMAGE_SIZE
     )

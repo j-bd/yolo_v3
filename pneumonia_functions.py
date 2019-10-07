@@ -188,7 +188,7 @@ def cfg_file_creator(dict_args, channel_nbr, class_nbr):
     steps = str(max_batches * 0.8) + ',' + str(max_batches * 0.9)
     filter_yolo = str((class_nbr + 5) * 3)
     new_cfg = new_cfg.replace('batch=64', 'batch=' + str(dict_args["batch"]))
-    new_cfg = new_cfg.replace('subdivisions=16', 'subdivisions=' + str(dict_args["subd"]))
+    new_cfg = new_cfg.replace('subdivisions=16', 'subdivisions=' + str(dict_args["subdivisions"]))
     new_cfg = new_cfg.replace('channels=3', 'channels=' + str(channel_nbr))
     new_cfg = new_cfg.replace('max_batches = 500200', 'max_batches =' + str(max_batches))
     new_cfg = new_cfg.replace('steps=400000,450000', 'steps=' + steps)
@@ -216,9 +216,9 @@ def data_file_creator(dict_args, class_nbr):
     data_file = os.path.join(dict_args["train_data_dir"], "obj.data")
     with open(data_file, 'w') as data:
         line = f"classes = {class_nbr}\n"\
-        f"train = {dict_args['train_data_dir'] + 'train.txt'}\n"\
-        f"valid = {dict_args['train_data_dir'] + 'val.txt'}\n"\
-        f"names = {dict_args['train_data_dir'] + 'obj.names'}\n"\
+        f"train = {dict_args['train_data_dir'] + '/train.txt'}\n"\
+        f"valid = {dict_args['train_data_dir'] + '/val.txt'}\n"\
+        f"names = {dict_args['train_data_dir'] + '/obj.names'}\n"\
         f"backup = {dict_args['backup']}\n"
         data.write(line)
 
@@ -232,9 +232,9 @@ def dcm_to_array(image_path):
 def yolo_jpg_file(df, dict_args):
     '''Copy the choosen images in the right directory under jpg format'''
     for image_name in df.iloc[:, 0].unique():
-        image = dcm_to_array(os.path.join(dict_args["origin_folder"], image_name))
+        image = dcm_to_array(os.path.join(dict_args["input_train_data_dir"], image_name))
         cv2.imwrite(
-            os.path.join(dict_args["target_folder"], image_name + ".jpg"), image
+            os.path.join(dict_args["train_images_dir"], image_name + ".jpg"), image
         )
 
 
@@ -264,7 +264,7 @@ def yolo_label_generation(df, target_folder, image_size):
 
 def yolo_image_path_file(df, dict_args, file_name):
     '''Generate a 'txt' file with the path and the name of each image'''
-    txt_file = os.path.join(dict_args["target_folder"], file_name)
+    txt_file = os.path.join(dict_args["train_data_dir"], file_name)
     with open(txt_file, "w+") as file:
         for image_name in df.iloc[:, 0].unique():
             line = "{}\n".format(os.path.join(dict_args["train_images_dir"], image_name + ".jpg"))
@@ -325,7 +325,7 @@ def algorithm_structure_creation(dict_args):
         dict_args["yolo_label"], os.path.join(dict_args["train_data_dir"], "labels")
     )
 
-    pre_trained_weights_download(constants.W_PATH, dict_args["proj_dir"])
+#    pre_trained_weights_download(constants.W_PATH, dict_args["project_dir"])
 
 
 def visualisation(image_dir_path, df, index_patient):
