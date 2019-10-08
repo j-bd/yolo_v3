@@ -17,16 +17,6 @@ import constants
 def training(dict_args):
     '''Lauch all necessary steps to set up Yolo v3 algorithm before objects
     trainning and lauch the training command'''
-#    image_dir = args.origin_folder
-#    input_train_data_dir = os.path.join(image_dir, "stage_2_train_images")
-#    project_dir = args.project_folder
-#    train_data_dir = os.path.join(project_dir, "data")
-#    train_images_dir = os.path.join(project_dir, "data/obj")
-#    backup = os.path.join(project_dir, "backup_log")
-#    file_train = os.path.join(image_dir, "stage_2_train_labels.csv")
-#    yolo_label = os.path.join(project_dir, "darknet/data/labels")
-#    test_images_dir = os.path.join(project_dir, "detect_results/obj")
-
     pneumonia_functions.algorithm_structure_creation(dict_args)
 
     pneumonia_functions.yolo_params_files_creation(
@@ -35,7 +25,9 @@ def training(dict_args):
 
     df = pd.read_csv(dict_args["file_train"])
 
-#    pneumonia_functions.yolo_jpg_file(df, dict_args)
+    pneumonia_functions.yolo_jpg_file(
+        df, dict_args["input_train_data_dir"], dict_args["train_images_dir"]
+    )
     pneumonia_functions.yolo_label_generation(
         df, dict_args["train_images_dir"], constants.IMAGE_SIZE
     )
@@ -53,31 +45,24 @@ def training(dict_args):
     )
 
 
-def detection(args):
+def detection(dict_args):
     '''Lauch all necessary steps to set up Yolo v3 algorithm before objects
     detection'''
-#    image_dir = args.origin_folder
-#    input_test_data_dir = os.path.join(args.origin_folder, "stage_2_test_images")
-#    project_dir = args.project_folder
-#    test_data_dir = os.path.join(project_dir, "detect_results")
-#    test_images_dir = os.path.join(project_dir, "detect_results/obj")
-#    file_test = os.path.join(image_dir, "stage_2_sample_submission.csv")
-
-    test_dataset = pd.read_csv(file_test)
+    test_df = pd.read_csv(dict_args["file_test"])
     pneumonia_functions.yolo_jpg_file(
-        test_dataset, input_test_data_dir, test_images_dir
+        test_df, dict_args["input_test_data_dir"], dict_args["test_images_dir"]
     )
     cfg_file = pneumonia_detection.test_cfg_file(
-        project_dir, test_data_dir, constants.BATCH, constants.SUB,
-        constants.OBJ_DETEC, args.detect_im_size
+        dict_args, constants.BATCH, constants.SUB, constants.OBJ_DETEC
     )
     images_to_detect = list()
-    for image_name in test_dataset.iloc[:20, 0].unique():
-        images_to_detect.append(os.path.join(test_images_dir, image_name + ".jpg"))
+    for image_name in test_df.iloc[:20, 0].unique(): #suppr 20
+        images_to_detect.append(
+            os.path.join(dict_args["test_images_dir"], image_name + ".jpg")
+        )
 
     pneumonia_detection.image_detection(
-        cfg_file, images_to_detect, os.path.join(test_data_dir, "submission.csv"),
-        args
+        cfg_file, images_to_detect, dict_args
     )
 
 

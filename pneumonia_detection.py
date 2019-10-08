@@ -22,11 +22,11 @@ def submission_file(output_path, result):
             line = line + "\n"
             file.write(line)
 
-def test_cfg_file(project_dir, test_data_dir, batch, subd, class_nbr, size):
+def test_cfg_file(dict_args, batch, subd, class_nbr):
     '''Create a new '.cfg' file for yolo v3 detection as recommand by authors.
     We increase the network-resolution by changing the size of 'height' and
     'width'. Note that we need to keep a value multiple of 32'''
-    input_cfg = os.path.join(project_dir, "darknet/cfg/yolov3.cfg")
+    input_cfg = os.path.join(dict_args["project_dir"], "darknet/cfg/yolov3.cfg")
     with open(input_cfg, 'r') as cfg_in:
         new_cfg = cfg_in.read()
 
@@ -41,10 +41,10 @@ def test_cfg_file(project_dir, test_data_dir, batch, subd, class_nbr, size):
     new_cfg = new_cfg.replace('steps=400000,450000', 'steps=' + steps)
     new_cfg = new_cfg.replace('classes=80', 'classes=' + str(class_nbr))
     new_cfg = new_cfg.replace('filters=255', 'filters=' + filter_yolo)
-    new_cfg = new_cfg.replace('width=608', 'width=' + str(size))
-    new_cfg = new_cfg.replace('height=608', 'height=' + str(size))
+    new_cfg = new_cfg.replace('width=608', 'width=' + str(dict_args["detect_im_size"]))
+    new_cfg = new_cfg.replace('height=608', 'height=' + str(dict_args["detect_im_size"]))
 
-    output_cfg = os.path.join(test_data_dir, "yolo-obj_test.cfg")
+    output_cfg = os.path.join(dict_args["test_data_dir"], "yolo-obj_test.cfg")
     with open(output_cfg, 'w') as cfg_out:
         cfg_out.write(new_cfg)
 
@@ -120,16 +120,17 @@ def detect(image_path, weights_path, config_path, confidence, threshold, show=Fa
     return ' '.join(final_boxes)
 
 
-def image_detection(cfg_path, images, output_path, args):
+def image_detection(cfg_path, images, dict_args):
     "Lauch detection for images"
+    output_path = os.path.join(dict_args["test_data_dir"], "submission.csv")
     result = list()
     result.append("patientId,PredictionString")
 
     for image in images:
         logging.info(f"{images.index(image) + 1} / {len(images)}")
         box_coordinate = detect(
-            image, args.weights_path, cfg_path, args.confidence,
-            args.threshold
+            image, dict_args["weights_path"], cfg_path, dict_args["confidence"],
+            dict_args["threshold"]
         )
         result.append(box_coordinate)
     submission_file(output_path, result)
