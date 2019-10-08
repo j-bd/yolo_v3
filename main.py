@@ -25,7 +25,7 @@ def training(dict_args):
 
     df = pd.read_csv(dict_args["file_train"])
 
-    pneumonia_functions.yolo_jpg_file(
+    pneumonia_functions.create_jpg_file(
         df, dict_args["input_train_data_dir"], dict_args["train_images_dir"]
     )
     pneumonia_functions.yolo_label_generation(
@@ -49,7 +49,7 @@ def detection(dict_args):
     '''Lauch all necessary steps to set up Yolo v3 algorithm before objects
     detection'''
     test_df = pd.read_csv(dict_args["file_test"])
-    pneumonia_functions.yolo_jpg_file(
+    pneumonia_functions.create_jpg_file(
         test_df, dict_args["input_test_data_dir"], dict_args["test_images_dir"]
     )
     cfg_file = pneumonia_detection.test_cfg_file(
