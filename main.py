@@ -56,7 +56,7 @@ def detection(dict_args):
         dict_args, constants.BATCH, constants.SUB, constants.OBJ_DETEC
     )
     images_to_detect = list()
-    for image_name in test_df.iloc[:20, 0].unique(): #suppr 20
+    for image_name in test_df.patientId.unique():
         images_to_detect.append(
             os.path.join(dict_args["test_images_dir"], image_name + ".jpg")
         )
