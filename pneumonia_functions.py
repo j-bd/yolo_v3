@@ -229,13 +229,11 @@ def dcm_to_array(image_path):
     return dcm_im
 
 
-def yolo_jpg_file(df, dict_args):
+def yolo_jpg_file(df, origin_folder, target_folder):
     '''Copy the choosen images in the right directory under jpg format'''
     for image_name in df.iloc[:, 0].unique():
-        image = dcm_to_array(os.path.join(dict_args["input_train_data_dir"], image_name))
-        cv2.imwrite(
-            os.path.join(dict_args["train_images_dir"], image_name + ".jpg"), image
-        )
+        image = dcm_to_array(os.path.join(origin_folder, image_name))
+        cv2.imwrite(os.path.join(target_folder, image_name + ".jpg"), image)
 
 
 def yolo_label_generation(df, target_folder, image_size):
@@ -325,7 +323,7 @@ def algorithm_structure_creation(dict_args):
         dict_args["yolo_label"], os.path.join(dict_args["train_data_dir"], "labels")
     )
 
-#    pre_trained_weights_download(constants.W_PATH, dict_args["project_dir"])
+    pre_trained_weights_download(constants.W_PATH, dict_args["project_dir"])
 
 
 def visualisation(image_dir_path, df, index_patient):
