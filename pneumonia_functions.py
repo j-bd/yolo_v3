@@ -229,9 +229,9 @@ def dcm_to_array(image_path):
     return dcm_im
 
 
-def create_jpg_file(df, origin_folder, target_folder):
+def create_jpg_file(set_id, origin_folder, target_folder):
     '''Copy the choosen images in the right directory under jpg format'''
-    for image_name in df:
+    for image_name in set_id:
         image = dcm_to_array(os.path.join(origin_folder, image_name))
         cv2.imwrite(os.path.join(target_folder, image_name + ".jpg"), image)
 
@@ -280,15 +280,15 @@ def pre_trained_weights_download(link, path):
 
 
 def data_selection(df, split_rate):
-    '''Produce different datasets. As required by the authors of Yolov3, we need
+    '''Produce different dataframe. As required by the authors of Yolov3, we need
     to have DataFrames of same size
     '''
     # Dataframe with only images of pneumonia
-    positive = df[df.iloc[:, -1] == 1]
+    positive = df[df.Target == 1]
     pos_size = len(positive)
 
     # Dataframe with only images of non pneumonia
-    negative = df[df.iloc[:, -1] == 0]
+    negative = df[df.Target == 0]
     neg_size = min(pos_size, len(negative))
     negative = negative.iloc[: neg_size, :]
 
