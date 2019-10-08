@@ -26,7 +26,8 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 def arguments_parser():
     '''Get the informations from the operator'''
     parser = argparse.ArgumentParser(
-        prog='YOLOv3 new object training', usage='%(prog)s [Initially for RSNA pneumonia Kaggle challenge]',
+        prog='YOLOv3 new object training',
+        usage='%(prog)s [Initially for RSNA pneumonia Kaggle challenge]',
         formatter_class=argparse.RawDescriptionHelpFormatter, description='''
         To lauch the preprocessing execution:
         -------------------------------------
