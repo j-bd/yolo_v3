@@ -23,16 +23,16 @@ def training(dict_args):
         dict_args, constants.CHANNEL_NBR, constants.OBJ_NBR, constants.OBJ_NAME
     )
 
-    df = pd.read_csv(dict_args["file_train"])
+    train_df = pd.read_csv(dict_args["file_train"])
 
     pneumonia_functions.create_jpg_file(
-        df, dict_args["input_train_data_dir"], dict_args["train_images_dir"]
+        set(train_df.iloc[:, 0]), dict_args["input_train_data_dir"], dict_args["train_images_dir"]
     )
     pneumonia_functions.yolo_label_generation(
-        df, dict_args["train_images_dir"], constants.IMAGE_SIZE
+        train_df, dict_args["train_images_dir"], constants.IMAGE_SIZE
     )
 
-    train_df, val_df = pneumonia_functions.data_selection(df, dict_args["split_rate"])
+    train_df, val_df = pneumonia_functions.data_selection(train_df, dict_args["split_rate"])
     pneumonia_functions.yolo_image_path_file(
         train_df, dict_args, "train.txt"
     )
@@ -50,7 +50,7 @@ def detection(dict_args):
     detection'''
     test_df = pd.read_csv(dict_args["file_test"])
     pneumonia_functions.create_jpg_file(
-        test_df, dict_args["input_test_data_dir"], dict_args["test_images_dir"]
+        set(test_df.iloc[:, 0]), dict_args["input_test_data_dir"], dict_args["test_images_dir"]
     )
     cfg_file = pneumonia_detection.test_cfg_file(
         dict_args, constants.BATCH, constants.SUB, constants.OBJ_DETEC
